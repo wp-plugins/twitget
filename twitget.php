@@ -285,7 +285,7 @@
 							</select>
 							<br />
             				<span class="description">Set the API you will be using, note that API 1.0 expires on March 2013. To use API 1.1, create a Twitter aplication on the <a href="https://dev.twitter.com/apps/new" target="_blank">
-							Twitter's developer page</a> with your username and enter the consumer key, consumer secret, access token and access token secret.</span>
+							Twitter's developer page</a>. If you're lost, check <a href="http://youtu.be/noB3P-K-wb4" target="_blank">this tutorial</a> on Youtube.</span>
 						</td>
 					</tr>
 					<tr>
