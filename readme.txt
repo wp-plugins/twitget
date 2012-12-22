@@ -47,6 +47,12 @@ None at the moment.
 = 1.0 =
 * Initial version.
 
+== Creating a Twitter application ==
+
+To use the Twitter 1.1 API you need to create an application. Follow this Youtube tutorial to create it.
+
+[youtube http://www.youtube.com/watch?v=noB3P-K-wb4]
+
 == Author ==
 
 The author of this plugin is Bostjan Cigan, visit the [homepage](http://bostjan.gets-it.net "homepage").
