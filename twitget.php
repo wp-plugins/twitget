@@ -4,7 +4,7 @@
 		Plugin Name: Twitget
 		Plugin URI: http://wpplugz.is-leet.com
 		Description: A simple widget that shows your recent tweets with fully customizable HTML output.
-		Version: 1.1
+		Version: 1.2
 		Author: Bostjan Cigan
 		Author URI: http://bostjan.gets-it.net
 		License: GPL v2
@@ -44,7 +44,8 @@
 			'consumer_secret' => '',
 			'user_token' => '',
 			'user_secret' => '',
-			'mode' => 0
+			'mode' => 0,
+			'show_retweets' => false
 		);			
 
 		add_option('twitget_settings', $plugin_options);
@@ -58,16 +59,18 @@
 		$update = false;
 		
 		if(!isset($plugin_options['version'])) {
-			$plugin_options['version'] = 1.1;
+			$plugin_options['version'] = 1.2;
 			$update = true;
 		}
 		
-		if($plugin_options['version'] < 1.1 || $update) {
-			$plugin_options['consumer_key'] = '';
-			$plugin_options['consumer_secret'] = '';
-			$plugin_options['user_token'] = '';
-			$plugin_options['user_secret'] = '';
-			$plugin_options['mode'] = 0;
+		if($plugin_options['version'] < 1.2 || $update) {
+			$plugin_options['version'] = 1.2;
+			$plugin_options['consumer_key'] = (isset($plugin_options['consumer_key'])) ? $plugin_options['consumer_key'] : '';
+			$plugin_options['consumer_secret'] = (isset($plugin_options['consumer_secret'])) ? $plugin_options['consumer_secret'] : '';
+			$plugin_options['user_token'] = (isset($plugin_options['user_token'])) ? $plugin_options['user_token'] : '';
+			$plugin_options['user_secret'] = (isset($plugin_options['user_secret'])) ? $plugin_options['user_secret'] : '';
+			$plugin_options['mode'] = (isset($plugin_options['consumer_key'])) ? $plugin_options['mode'] : 0;
+			$plugin_options['show_retweets'] = false;
 		}
 		
 		update_option('twitget_settings', $plugin_options);
@@ -96,11 +99,12 @@
 									)
 								);
  
-		$code = $tmhOAuth->request('GET', $tmhOAuth->url('1.1/statuses/user_timeline'), array(
-																								'screen_name' => $options['twitter_username'],
-																								'count' => $options['number_of_tweets']
-																						)
-									);
+		$request_array = array();
+		$request_array['screen_name'] = $options['twitter_username'];
+		$request_array['count'] = $options['number_of_tweets'];
+		$request_array['include_rts'] = $options['show_retweets'];
+ 
+		$code = $tmhOAuth->request('GET', $tmhOAuth->url('1.1/statuses/user_timeline'), $request_array);
  
 		$response = $tmhOAuth->response['response'];
 		$tweets = json_decode($response, true);
@@ -117,7 +121,12 @@
 		$twitter_id = $options['twitter_username'];
 		$number_limit = $options['number_of_tweets'];
 		$curl = curl_init();
-		curl_setopt($curl, CURLOPT_URL, "http://api.twitter.com/1/statuses/user_timeline/{$twitter_id}.json?count=".$number_limit);
+		$url = "http://api.twitter.com/1/statuses/user_timeline/{$twitter_id}.json?count={$number_limit}";
+		if($options['show_retweets']) {
+			$url = $url.'&include_rts=1';
+		}
+		
+		curl_setopt($curl, CURLOPT_URL, $url);
 		curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
 		$tweets = json_decode(curl_exec($curl), true);
 		curl_close($curl);
@@ -215,6 +224,7 @@
 		
 			$show_powered = $_POST['twitget_show_powered'];
 			$show_avatar = $_POST['twitget_show_avatar'];
+			$show_retweets = $_POST['twitget_retweets'];
 		
 			$twitget_settings['twitter_username'] = stripslashes($_POST['twitget_username']);
 			$twitget_settings['time_limit'] = (int) $_POST['twitget_refresh'];
@@ -233,6 +243,7 @@
 			$twitget_settings['user_token'] = stripslashes($_POST['twitget_user_token']);
 			$twitget_settings['user_secret'] = stripslashes($_POST['twitget_user_secret']);
 			$twitget_settings['mode'] = (int) ($_POST['twitget_api']);
+			$twitget_settings['show_retweets'] = (isset($show_retweets)) ? true : false;
 			update_option('twitget_settings', $twitget_settings);
 			$message = "Settings updated.";
 		}
@@ -348,6 +359,14 @@
             				<span class="description">The time format.</span>
 						</td>
 					</tr>
+					<tr>
+						<th scope="row"><label for="twitget_retweets">Show retweets</label></th>
+						<td>
+		    	            <input type="checkbox" name="twitget_retweets" id="twitget_retweets" value="true" <?php if($twitget_options['show_retweets'] == true) { ?>checked="checked"<?php } ?> />
+							<br />
+            				<span class="description">Check this if you want to include retweets in your feed.</span>
+						</td>
+					</tr>		
 					<tr>
 						<th scope="row"><label for="twitget_show_avatar">Show profile box</label></th>
 						<td>
