@@ -69,7 +69,7 @@
 			$plugin_options['consumer_secret'] = (isset($plugin_options['consumer_secret'])) ? $plugin_options['consumer_secret'] : '';
 			$plugin_options['user_token'] = (isset($plugin_options['user_token'])) ? $plugin_options['user_token'] : '';
 			$plugin_options['user_secret'] = (isset($plugin_options['user_secret'])) ? $plugin_options['user_secret'] : '';
-			$plugin_options['mode'] = (isset($plugin_options['consumer_key'])) ? $plugin_options['mode'] : 0;
+			$plugin_options['mode'] = (isset($plugin_options['mode'])) ? $plugin_options['mode'] : 0;
 			$plugin_options['show_retweets'] = false;
 		}
 		
