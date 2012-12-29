@@ -4,7 +4,7 @@
 		Plugin Name: Twitget
 		Plugin URI: http://wpplugz.is-leet.com
 		Description: A simple widget that shows your recent tweets with fully customizable HTML output.
-		Version: 1.2.1
+		Version: 1.2.2
 		Author: Bostjan Cigan
 		Author URI: http://bostjan.gets-it.net
 		License: GPL v2
@@ -39,7 +39,7 @@
 			'after_tweets_html' => '</ul>',
 			'time_format' => 'D jS M y H:i',
 			'show_powered_by' => false,
-			'version' => '1.21',
+			'version' => '1.22',
 			'consumer_key' => '',
 			'consumer_secret' => '',
 			'user_token' => '',
@@ -59,7 +59,7 @@
 		$update = false;
 		
 		if(!isset($plugin_options['version'])) {
-			$plugin_options['version'] = '1.21';
+			$plugin_options['version'] = '1.22';
 			$update = true;
 		}
 		
@@ -79,7 +79,7 @@
 			'after_tweets_html' => '</ul>',
 			'time_format' => 'D jS M y H:i',
 			'show_powered_by' => false,
-			'version' => '1.21',
+			'version' => '1.22',
 			'consumer_key' => '',
 			'consumer_secret' => '',
 			'user_token' => '',
@@ -88,17 +88,14 @@
 			'show_retweets' => false
 		);		
 		
-		if(((float) $plugin_options['version']) < 1.21 || $update) {
-			$plugin_options['version'] = '1.21';
-			$plugin_options['consumer_key'] = (isset($plugin_options['consumer_key'])) ? $plugin_options['consumer_key'] : '';
-			$plugin_options['consumer_secret'] = (isset($plugin_options['consumer_secret'])) ? $plugin_options['consumer_secret'] : '';
-			$plugin_options['user_token'] = (isset($plugin_options['user_token'])) ? $plugin_options['user_token'] : '';
-			$plugin_options['user_secret'] = (isset($plugin_options['user_secret'])) ? $plugin_options['user_secret'] : '';
-			$plugin_options['mode'] = (isset($plugin_options['mode'])) ? $plugin_options['mode'] : 0;
-			$plugin_options['show_retweets'] = false;
+		if(((float) $plugin_options['version']) < 1.22 || $update) {
+			$plugin_options['version'] = '1.22';
 			foreach($plugin_orig as $key => $value) {
 				$plugin_options[$key] = (isset($plugin_options[$key]) && strlen($plugin_options[$key]) > 0) ? $plugin_options[$key] : $value; 
 			}
+			$plugin_options['time_limit'] = ($plugin_options['time_limit'] > 0) ? $plugin_options['time_limit'] : 5;
+			$plugin_options['number_of_tweets'] = ($plugin_options['number_of_tweets'] > 0) ? $plugin_options['number_of_tweets'] : 5;
+			
 			update_option('twitget_settings', $plugin_options);
 		}
 		
@@ -167,8 +164,8 @@
 	function process_links($text) {
 
 		$text = preg_replace('@(https?://([-\w\.]+)+(d+)?(/([\w/_\.]*(\?\S+)?)?)?)@', '<a href="$1">$1</a>',  $text);
-		$text = preg_replace("#(^|[\n ])@([^ \"\t\n\r<]*)#ise", "'\\1<a href=\"http://www.twitter.com/\\2\" >@\\2</a>'", $text);
-		$text = preg_replace("#(^|[\n ])\#([^ \"\t\n\r<]*)#ise", "'\\1<a href=\"https://twitter.com/search?q=%23\\2&src=hash\" >#\\2</a>'", $text);
+		$text = preg_replace('/@(\w+)/', '<a href="http://twitter.com/$1">@$1</a>', $text);
+		$text = preg_replace('/\s#(\w+)/', ' <a href="http://search.twitter.com/search?q=%23$1">#$1</a>', $text);
 		return $text;
 
 	}
