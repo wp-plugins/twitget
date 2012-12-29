@@ -3,8 +3,8 @@ Contributors: ZeroCool51
 Donate link: http://gum.co/twitget
 Tags: twitter widget, twitter, simple twitter widget, custom twitter, widget, tweet, twitter sidebar, twitter 1.1 api
 Requires at least: 3.0
-Tested up to: 3.4.5
-Stable tag: 1.2
+Tested up to: 3.5
+Stable tag: 1.2.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -41,7 +41,11 @@ None at the moment.
 
 == Changelog ==
 
-= 1.2 =
+= 1.21 =
+* [Fix] At update, some options would not show
+* [Fix] Old updates (1.2, 1.1) caused empty values at fresh install or update
+
+= 1.2.1 =
 * Added the ability to include retweets in your feed.
 
 = 1.1 =

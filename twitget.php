@@ -4,7 +4,7 @@
 		Plugin Name: Twitget
 		Plugin URI: http://wpplugz.is-leet.com
 		Description: A simple widget that shows your recent tweets with fully customizable HTML output.
-		Version: 1.2
+		Version: 1.2.1
 		Author: Bostjan Cigan
 		Author URI: http://bostjan.gets-it.net
 		License: GPL v2
@@ -39,7 +39,7 @@
 			'after_tweets_html' => '</ul>',
 			'time_format' => 'D jS M y H:i',
 			'show_powered_by' => false,
-			'version' => 1.1,
+			'version' => '1.21',
 			'consumer_key' => '',
 			'consumer_secret' => '',
 			'user_token' => '',
@@ -54,27 +54,54 @@
 	
 	function twitget_update() {
 		
-		$plugin_options = get_option('twitget_settings');
+		$plugin_options = get_option('twitget_settings', true);
 		
 		$update = false;
 		
 		if(!isset($plugin_options['version'])) {
-			$plugin_options['version'] = 1.2;
+			$plugin_options['version'] = '1.21';
 			$update = true;
 		}
 		
-		if($plugin_options['version'] < 1.2 || $update) {
-			$plugin_options['version'] = 1.2;
+		// This is for backward purposes only, one screwed update was the cause
+		$plugin_orig = array(
+			'twitter_username' => '',
+			'twitter_data' => NULL,
+			'last_access' => time(),
+			'time_limit' => 5,
+			'number_of_tweets' => 5,
+			'show_avatar' => true,
+			'after_image_html' => '<ul>',
+			'before_tweets_html' => '',
+			'tweet_start_html' => '<li>',
+			'tweet_middle_html' => '<br />',
+			'tweet_end_html' => '</li>',
+			'after_tweets_html' => '</ul>',
+			'time_format' => 'D jS M y H:i',
+			'show_powered_by' => false,
+			'version' => '1.21',
+			'consumer_key' => '',
+			'consumer_secret' => '',
+			'user_token' => '',
+			'user_secret' => '',
+			'mode' => 0,
+			'show_retweets' => false
+		);		
+		
+		if(((float) $plugin_options['version']) < 1.21 || $update) {
+			$plugin_options['version'] = '1.21';
 			$plugin_options['consumer_key'] = (isset($plugin_options['consumer_key'])) ? $plugin_options['consumer_key'] : '';
 			$plugin_options['consumer_secret'] = (isset($plugin_options['consumer_secret'])) ? $plugin_options['consumer_secret'] : '';
 			$plugin_options['user_token'] = (isset($plugin_options['user_token'])) ? $plugin_options['user_token'] : '';
 			$plugin_options['user_secret'] = (isset($plugin_options['user_secret'])) ? $plugin_options['user_secret'] : '';
 			$plugin_options['mode'] = (isset($plugin_options['mode'])) ? $plugin_options['mode'] : 0;
 			$plugin_options['show_retweets'] = false;
+			foreach($plugin_orig as $key => $value) {
+				$plugin_options[$key] = (isset($plugin_options[$key]) && strlen($plugin_options[$key]) > 0) ? $plugin_options[$key] : $value; 
+			}
+			update_option('twitget_settings', $plugin_options);
 		}
 		
-		update_option('twitget_settings', $plugin_options);
-
 	}
 	
 	function twitget_uninstall() {
@@ -249,7 +276,7 @@
 		}
 
 		$twitget_options = get_option('twitget_settings');
-		
+				
 ?>
 
 		<div id="icon-options-general" class="icon32"></div><h2>Twitget Settings</h2>
