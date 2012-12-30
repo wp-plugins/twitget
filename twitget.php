@@ -4,7 +4,7 @@
 		Plugin Name: Twitget
 		Plugin URI: http://wpplugz.is-leet.com
 		Description: A simple widget that shows your recent tweets with fully customizable HTML output.
-		Version: 1.2.2
+		Version: 1.2.3
 		Author: Bostjan Cigan
 		Author URI: http://bostjan.gets-it.net
 		License: GPL v2
@@ -20,7 +20,7 @@
 	register_deactivation_hook(__FILE__, 'twitget_uninstall');
 	add_action('admin_menu', 'twitget_admin_menu_create');
 	add_action('widgets_init', create_function('', 'return register_widget("simple_tweet_widget");')); // Register the widget
-	twitget_update();
+	//twitget_update();
 	
 	function twitget_install() {
 
@@ -39,7 +39,7 @@
 			'after_tweets_html' => '</ul>',
 			'time_format' => 'D jS M y H:i',
 			'show_powered_by' => false,
-			'version' => '1.22',
+			'version' => '1.23',
 			'consumer_key' => '',
 			'consumer_secret' => '',
 			'user_token' => '',
@@ -59,7 +59,7 @@
 		$update = false;
 		
 		if(!isset($plugin_options['version'])) {
-			$plugin_options['version'] = '1.22';
+			$plugin_options['version'] = '1.23';
 			$update = true;
 		}
 		
@@ -79,7 +79,7 @@
 			'after_tweets_html' => '</ul>',
 			'time_format' => 'D jS M y H:i',
 			'show_powered_by' => false,
-			'version' => '1.22',
+			'version' => '1.23',
 			'consumer_key' => '',
 			'consumer_secret' => '',
 			'user_token' => '',
@@ -88,8 +88,8 @@
 			'show_retweets' => false
 		);		
 		
-		if(((float) $plugin_options['version']) < 1.22 || $update) {
-			$plugin_options['version'] = '1.22';
+		if(($plugin_options['version'] < 1.23) || $update) {
+			$plugin_options['version'] = '1.23';
 			foreach($plugin_orig as $key => $value) {
 				$plugin_options[$key] = (isset($plugin_options[$key]) && strlen($plugin_options[$key]) > 0) ? $plugin_options[$key] : $value; 
 			}
@@ -241,7 +241,7 @@
 
 	function twitget_settings() {
 	
-		$twitget_settings = get_option('twitget_settings');
+		$twitget_settings = get_option('twitget_settings', true);
 		$message = '';
 		
 		if(isset($_POST['twitget_username'])) {
@@ -272,7 +272,7 @@
 			$message = "Settings updated.";
 		}
 
-		$twitget_options = get_option('twitget_settings');
+		$twitget_options = get_option('twitget_settings', true);
 				
 ?>
 
