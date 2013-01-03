@@ -4,7 +4,7 @@
 		Plugin Name: Twitget
 		Plugin URI: http://wpplugz.is-leet.com
 		Description: A simple widget that shows your recent tweets with fully customizable HTML output.
-		Version: 1.2.3
+		Version: 1.2.4
 		Author: Bostjan Cigan
 		Author URI: http://bostjan.gets-it.net
 		License: GPL v2
@@ -39,7 +39,7 @@
 			'after_tweets_html' => '</ul>',
 			'time_format' => 'D jS M y H:i',
 			'show_powered_by' => false,
-			'version' => '1.23',
+			'version' => '1.24',
 			'consumer_key' => '',
 			'consumer_secret' => '',
 			'user_token' => '',
@@ -59,7 +59,7 @@
 		$update = false;
 		
 		if(!isset($plugin_options['version'])) {
-			$plugin_options['version'] = '1.23';
+			$plugin_options['version'] = '1.24';
 			$update = true;
 		}
 		
@@ -79,7 +79,7 @@
 			'after_tweets_html' => '</ul>',
 			'time_format' => 'D jS M y H:i',
 			'show_powered_by' => false,
-			'version' => '1.23',
+			'version' => '1.24',
 			'consumer_key' => '',
 			'consumer_secret' => '',
 			'user_token' => '',
@@ -88,8 +88,8 @@
 			'show_retweets' => false
 		);		
 		
-		if(($plugin_options['version'] < 1.23) || $update) {
-			$plugin_options['version'] = '1.23';
+		if(($plugin_options['version'] < 1.24) || $update) {
+			$plugin_options['version'] = '1.24';
 			foreach($plugin_orig as $key => $value) {
 				$plugin_options[$key] = (isset($plugin_options[$key]) && strlen($plugin_options[$key]) > 0) ? $plugin_options[$key] : $value; 
 			}
@@ -214,7 +214,17 @@
 		$i = 0;
 		foreach($tweets as $tweet) {
 			$result = $result.$options['tweet_start_html'];
-			$link_processed = process_links($tweet['text']);
+			$tweet_text = $tweet['text'];
+			$link_processed = "";
+			if(isset($tweet['retweeted_status'])) {
+				$first = current(explode(":", $tweet_text));
+				$whole_tweet = $first.": ";
+				$whole_tweet .= $tweet['retweeted_status']['text'];
+				$link_processed = process_links($whole_tweet);
+			}
+			else {
+				$link_processed = process_links($tweet['text']);
+			}
 			$result = $result.$link_processed.$options['tweet_middle_html'];
 			$date = date($options['time_format'], strtotime($tweet['created_at']));
 			$result = $result.$date;
