@@ -84,3 +84,14 @@ The author of this plugin is Bostjan Cigan, visit the [homepage](http://bostjan.
 == Homepage ==
 
 Visit the [homepage](http://wpplugz.is-leet.com "homepage of twitget") of the plugin.
+
+== Donators ==
+
+Thank you to the following people who have donated so far:
+
+* Aaron
+* Corinne
+* Civil Society Trust
+
+I appreciate your support!
+
