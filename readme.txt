@@ -4,7 +4,7 @@ Donate link: http://gum.co/twitget
 Tags: twitter widget, twitter, simple twitter widget, custom twitter, widget, tweet, twitter sidebar, twitter 1.1 api
 Requires at least: 3.0
 Tested up to: 3.5
-Stable tag: 1.2.4
+Stable tag: 1.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -18,6 +18,7 @@ What this plugin offers:
 
 * Show your Twitter feed as a widget
 * Customize number of shown tweets
+* Customize if you want to show retweets or replies
 * Show profile box
 * Customize entire HTML output
 * Twitter API 1.1 support
@@ -40,6 +41,11 @@ None at the moment.
 3. Widget settings page
 
 == Changelog ==
+
+= 1.3 =
+* Added the option to exclude replies
+* Added the option to show relative time of tweets
+* Added the option to fully customize html output.
 
 = 1.2.4 =
 * [Fix] Sometimes retweets were cut or content was missing.

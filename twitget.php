@@ -4,7 +4,7 @@
 		Plugin Name: Twitget
 		Plugin URI: http://wpplugz.is-leet.com
 		Description: A simple widget that shows your recent tweets with fully customizable HTML output.
-		Version: 1.2.4
+		Version: 1.3
 		Author: Bostjan Cigan
 		Author URI: http://bostjan.gets-it.net
 		License: GPL v2
@@ -20,7 +20,12 @@
 	register_deactivation_hook(__FILE__, 'twitget_uninstall');
 	add_action('admin_menu', 'twitget_admin_menu_create');
 	add_action('widgets_init', create_function('', 'return register_widget("simple_tweet_widget");')); // Register the widget
-	//twitget_update();
+	$plugin_options = get_option('twitget_settings', true);
+		
+	if(!isset($plugin_options['version']) || $plugin_options['version'] < 1.3) {
+		twitget_update();
+	}
+
 	
 	function twitget_install() {
 
@@ -39,13 +44,24 @@
 			'after_tweets_html' => '</ul>',
 			'time_format' => 'D jS M y H:i',
 			'show_powered_by' => false,
-			'version' => '1.24',
+			'version' => '1.3',
 			'consumer_key' => '',
 			'consumer_secret' => '',
 			'user_token' => '',
 			'user_secret' => '',
 			'mode' => 0,
-			'show_retweets' => false
+			'show_retweets' => false,
+			'exclude_replies' => false,
+			'use_custom' => false,
+			'custom_string' => '<img class="alignleft" src="{$profile_image}">
+<a href="https://www.twitter.com/{$user_twitter_name}">{$user_twitter_name}</a>
+<br />
+{$user_description}
+<ul class="pages">
+{$tweets_start}
+	<li>{$tweet_text}<br />{$tweet_time}</li>
+{$tweets_end}
+</ul>'
 		);			
 
 		add_option('twitget_settings', $plugin_options);
@@ -59,7 +75,7 @@
 		$update = false;
 		
 		if(!isset($plugin_options['version'])) {
-			$plugin_options['version'] = '1.24';
+			$plugin_options['version'] = '1.3';
 			$update = true;
 		}
 		
@@ -79,19 +95,31 @@
 			'after_tweets_html' => '</ul>',
 			'time_format' => 'D jS M y H:i',
 			'show_powered_by' => false,
-			'version' => '1.24',
+			'version' => '1.3',
 			'consumer_key' => '',
 			'consumer_secret' => '',
 			'user_token' => '',
 			'user_secret' => '',
 			'mode' => 0,
-			'show_retweets' => false
+			'show_retweets' => false,
+			'exclude_replies' => false,
+			'show_relative_time' => false,
+			'use_custom' => false,
+			'custom_string' => '<img class="alignleft" src="{$profile_image}">
+<a href="https://www.twitter.com/{$user_twitter_name}">{$user_twitter_name}</a>
+<br />
+{$user_description}
+<ul class="pages">
+{$tweets_start}
+	<li>{$tweet_text}<br />{$tweet_time}</li>
+{$tweets_end}
+</ul>'
 		);		
 		
-		if(($plugin_options['version'] < 1.24) || $update) {
-			$plugin_options['version'] = '1.24';
+		if(($plugin_options['version'] < 1.3) || $update) {
+			$plugin_options['version'] = '1.3';
 			foreach($plugin_orig as $key => $value) {
-				$plugin_options[$key] = (isset($plugin_options[$key]) && strlen($plugin_options[$key]) > 0) ? $plugin_options[$key] : $value; 
+				$plugin_options[$key] = (isset($plugin_options[$key]) && strlen($plugin_options[$key]) > 0) ? $plugin_options[$key] : $value;
 			}
 			$plugin_options['time_limit'] = ($plugin_options['time_limit'] > 0) ? $plugin_options['time_limit'] : 5;
 			$plugin_options['number_of_tweets'] = ($plugin_options['number_of_tweets'] > 0) ? $plugin_options['number_of_tweets'] : 5;
@@ -125,8 +153,8 @@
  
 		$request_array = array();
 		$request_array['screen_name'] = $options['twitter_username'];
-		$request_array['count'] = $options['number_of_tweets'];
 		$request_array['include_rts'] = $options['show_retweets'];
+		$request_array['exclude_replies'] = $options['exclude_replies'];
  
 		$code = $tmhOAuth->request('GET', $tmhOAuth->url('1.1/statuses/user_timeline'), $request_array);
  
@@ -148,6 +176,9 @@
 		$url = "http://api.twitter.com/1/statuses/user_timeline/{$twitter_id}.json?count={$number_limit}";
 		if($options['show_retweets']) {
 			$url = $url.'&include_rts=1';
+		}
+		if(!$options['exclude_replies']) {
+			$url = $url.'&exclude_replies=1';
 		}
 		
 		curl_setopt($curl, CURLOPT_URL, $url);
@@ -196,47 +227,117 @@
 		
 		$options = get_option('twitget_settings', true);
 		$tweets = $options['twitter_data'];
-		
+		$limit = $options['number_of_tweets'];
+
+		$image_url = $tweets[0]['user']['profile_image_url']; // {$profile_image}
+		$twitter_username = $tweets[0]['user']['screen_name']; // {$user_twitter_name}
+		$twitter_username_real = $tweets[0]['user']['name']; // {$user_real_name}
+		$twitter_user_url = $tweets[0]['user']['url']; // {$url}
+		$twitter_user_description = $tweets[0]['user']['description']; // {$user_description}
+		$twitter_follower_count = $tweets[0]['user']['followers_count']; // {$follower_count}
+		$twitter_friends_count = $tweets[0]['user']['friends_count']; // {$friends_count}
+		$twitter_user_location = $tweets[0]['user']['location']; // {$user_location}		
+
 		$result = "";
 
-		$image_url = $tweets[0]['user']['profile_image_url'];
-		$twitter_username = $tweets[0]['user']['screen_name'];
+		if(!$options['use_custom']) {
 
-		if($options['show_avatar']) {
-			$result = $result.$options['before_tweets_html'].'<img class="alignleft" src="'.$image_url.'"><span class="twitter_link"><a href="https://www.twitter.com/'.$twitter_username.'">@'.$twitter_username.'</a></span><br />'.$tweets[0]['user']['description'].$options['after_image_html'];
-		}
-		else {
-			$result = $result.$options['before_tweets_html'].$options['after_image_html'];
-		}
-
-		$limit = $options['number_of_tweets'];
-		
-		$i = 0;
-		foreach($tweets as $tweet) {
-			$result = $result.$options['tweet_start_html'];
-			$tweet_text = $tweet['text'];
-			$link_processed = "";
-			if(isset($tweet['retweeted_status'])) {
-				$first = current(explode(":", $tweet_text));
-				$whole_tweet = $first.": ";
-				$whole_tweet .= $tweet['retweeted_status']['text'];
-				$link_processed = process_links($whole_tweet);
+			if($options['show_avatar']) {
+				$result = $result.$options['before_tweets_html'].'<img class="alignleft" src="'.$image_url.'"><span class="twitter_link"><a href="https://www.twitter.com/'.$twitter_username.'">@'.$twitter_username.'</a></span><br />'.$twitter_user_description.$options['after_image_html'];
 			}
 			else {
-				$link_processed = process_links($tweet['text']);
+				$result = $result.$options['before_tweets_html'].$options['after_image_html'];
 			}
-			$result = $result.$link_processed.$options['tweet_middle_html'];
-			$date = date($options['time_format'], strtotime($tweet['created_at']));
-			$result = $result.$date;
-			$result = $result.$options['tweet_end_html'];
-			if($i == $limit - 1) {
-				break;
+
+			$i = 0;
+			foreach($tweets as $tweet) {
+				$result = $result.$options['tweet_start_html'];
+				$tweet_text = $tweet['text'];
+				$link_processed = "";
+				if(isset($tweet['retweeted_status'])) {
+					$first = current(explode(":", $tweet_text));
+					$whole_tweet = $first.": ";
+					$whole_tweet .= $tweet['retweeted_status']['text'];
+					$link_processed = process_links($whole_tweet);
+				}
+				else {
+					$link_processed = process_links($tweet['text']);
+				}
+				$result = $result.$link_processed.$options['tweet_middle_html'];
+				$date = date($options['time_format'], strtotime($tweet['created_at']));
+				if($options['show_relative_time']) {
+					$date = relativeTime(strtotime($date));
+				}
+				$result = $result.$date;
+				$result = $result.$options['tweet_end_html'];
+				if($i == $limit - 1) {
+					break;
+				}
+				$i = $i + 1;
 			}
-			$i = $i + 1;
+		
+			$result = $result.$options['after_tweets_html'];
+		
 		}
+
+		// Use custom HTML and output
+		else {
+
+			$custom_string = $options['custom_string'];
+			$feed_string = twitget_get_substring($custom_string, "{\$tweets_start}", "{\$tweets_end}");
 		
-		$result = $result.$options['after_tweets_html'];
-		
+			$feed_whole_string = "";
+
+			$i = 0;
+			foreach($tweets as $tweet) {
+				$tweet_text = $tweet['text'];
+				$tweet_location = $tweet['place']['full_name'];
+				$link_processed = "";
+				if(isset($tweet['retweeted_status'])) {
+					$first = current(explode(":", $tweet_text));
+					$whole_tweet = $first.": ";
+					$whole_tweet .= $tweet['retweeted_status']['text'];
+					$link_processed = process_links($whole_tweet);
+				}
+				else {
+					$link_processed = process_links($tweet['text']);
+				}
+				$date = date($options['time_format'], strtotime($tweet['created_at']));
+				if($options['show_relative_time']) {
+					$date = relativeTime(strtotime($date));
+				}
+				$feed_string_tmp = str_replace("{\$tweet_text}", $link_processed, $feed_string);
+				$feed_string_tmp = str_replace("{\$tweet_time}", $date, $feed_string_tmp);
+				$feed_string_tmp = str_replace("{\$tweet_location}", $tweet_location, $feed_string_tmp);
+				$feed_whole_string .= $feed_string_tmp;
+				if($i == $limit - 1) {
+					break;
+				}
+				$i = $i + 1;
+			}
+			
+			$feed_start = "{\$tweets_start}";
+			$feed_end = "{\$tweets_end}";
+
+			$start_pos = strrpos($custom_string, $feed_start);
+			$end_pos = strrpos($custom_string, $feed_end) + strlen($feed_end);
+			$tag_length = $end_pos - $start_pos + 1;
+
+			$feed_string = substr_replace($custom_string, $feed_whole_string, $start_pos, $tag_length);
+			$feed_string = str_replace("{\$profile_image}", $image_url, $feed_string);
+			$feed_string = str_replace("{\$user_twitter_name}", $twitter_username, $feed_string);
+			$feed_string = str_replace("{\$user_real_name}", $twitter_username_real, $feed_string);
+			$feed_string = str_replace("{\$url}", $twitter_user_url, $feed_string);
+			$feed_string = str_replace("{\$user_description}", $twitter_user_description, $feed_string);
+			$feed_string = str_replace("{\$follower_count}", $twitter_follower_count, $feed_string);
+			$feed_string = str_replace("{\$friends_count}", $twitter_friends_count, $feed_string);
+			$feed_string = str_replace("{\$user_location}", $twitter_user_location, $feed_string);
+			$feed_string = str_replace("{\$tweet_location}", $tweet_location, $feed_string);
+
+			$result = $feed_string;
+
+		}
+
 		if(isset($tweets['errors'][0]['code'])) {
 			$result = $options['before_tweets_html'].'<p>The Twitter feed is currently unavailable or the username does not exist.</p>';
 		}
@@ -245,10 +346,67 @@
 			$result = $result.'<p>Powered by <a href="http://wpplugz.is-leet.com">wpPlugz</a></p>';
 		}
 		
-		echo $result;		
+		echo $result;
 
 	}
 
+	// Get substring between two strings
+	function twitget_get_substring($string, $start, $end) {
+
+		$pos = stripos($string, $start);
+		$str = substr($string, $pos);
+		$str_two = substr($str, strlen($start));
+		$second_pos = stripos($str_two, $end);
+		$str_three = substr($str_two, 0, $second_pos);
+		$unit = trim($str_three);
+		
+		return $unit;
+	}
+
+	function relativeTime($date) {
+
+		$now = time();
+		$diff = $now - $date;
+
+		if ($diff < 60) {
+			return sprintf($diff > 1 ? '%s seconds ago' : 'A second ago', $diff);
+		}
+
+		$diff = floor($diff/60);
+
+		if ($diff < 60) {
+			return sprintf($diff > 1 ? '%s minutes ago' : 'One minute ago', $diff);
+		}
+
+		$diff = floor($diff/60);
+
+		if ($diff < 24) {
+			return sprintf($diff > 1 ? '%s hours ago' : 'An hour ago', $diff);
+		}
+
+		$diff = floor($diff/24);
+
+		if ($diff < 7) {
+			return sprintf($diff > 1 ? '%s days ago' : 'Yesterday', $diff);
+		}
+
+		if ($diff < 30) {
+			$diff = floor($diff / 7);
+			return sprintf($diff > 1 ? '%s weeks ago' : 'One week ago', $diff);
+		}
+
+		$diff = floor($diff/30);
+
+		if ($diff < 12) {
+			return sprintf($diff > 1 ? '%s months ago' : 'Last month', $diff);
+		}
+
+		$diff = date('Y', $now) - date('Y', $date);
+
+		return sprintf($diff > 1 ? '%s years ago' : 'Last year', $diff);
+
+	}	
+		
 	function twitget_settings() {
 	
 		$twitget_settings = get_option('twitget_settings', true);
@@ -259,6 +417,9 @@
 			$show_powered = $_POST['twitget_show_powered'];
 			$show_avatar = $_POST['twitget_show_avatar'];
 			$show_retweets = $_POST['twitget_retweets'];
+			$twitget_exclude = $_POST['twitget_exclude_replies'];
+			$twitget_relative = $_POST['twitget_relative_time'];
+			$twitget_custom = $_POST['twitget_use_custom'];
 		
 			$twitget_settings['twitter_username'] = stripslashes($_POST['twitget_username']);
 			$twitget_settings['time_limit'] = (int) $_POST['twitget_refresh'];
@@ -278,6 +439,10 @@
 			$twitget_settings['user_secret'] = stripslashes($_POST['twitget_user_secret']);
 			$twitget_settings['mode'] = (int) ($_POST['twitget_api']);
 			$twitget_settings['show_retweets'] = (isset($show_retweets)) ? true : false;
+			$twitget_settings['exclude_replies'] = (isset($twitget_exclude)) ? true : false;
+			$twitget_settings['show_relative_time'] = (isset($twitget_relative)) ? true : false;
+			$twitget_settings['use_custom'] = (isset($twitget_custom)) ? true : false;
+			$twitget_settings['custom_string'] = stripslashes(html_entity_decode($_POST['twitget_custom_output']));
 			update_option('twitget_settings', $twitget_settings);
 			$message = "Settings updated.";
 		}
@@ -402,11 +567,27 @@
 						</td>
 					</tr>		
 					<tr>
+						<th scope="row"><label for="twitget_exclude_replies">Exclude replies</label></th>
+						<td>
+		    	            <input type="checkbox" name="twitget_exclude_replies" id="twitget_exclude_replies" value="true" <?php if($twitget_options['exclude_replies'] == true) { ?>checked="checked"<?php } ?> />
+							<br />
+            				<span class="description">Check this if you want to exclude replies in your feed.</span>
+						</td>
+					</tr>		
+					<tr>
 						<th scope="row"><label for="twitget_show_avatar">Show profile box</label></th>
 						<td>
 		    	            <input type="checkbox" name="twitget_show_avatar" id="twitget_show_avatar" value="true" <?php if($twitget_options['show_avatar'] == true) { ?>checked="checked"<?php } ?> />
 							<br />
             				<span class="description">Show the profile box before tweets (including the avatar).</span>
+						</td>
+					</tr>		
+					<tr>
+						<th scope="row"><label for="twitget_relative_time">Show relative time</label></th>
+						<td>
+		    	            <input type="checkbox" name="twitget_relative_time" id="twitget_relative_time" value="true" <?php if($twitget_options['show_relative_time'] == true) { ?>checked="checked"<?php } ?> />
+							<br />
+            				<span class="description">Show relative time of tweets (for instance 5 minutes ago).</span>
 						</td>
 					</tr>		
 					<tr>
@@ -465,7 +646,48 @@
             				<span class="description">Show powered by message, if you decide not to show it, please consider a <a href="http://gum.co/twitget">donation</a><script type="text/javascript" src="https://gumroad.com/js/gumroad-button.js"></script><script type="text/javascript" src="https://gumroad.com/js/gumroad.js"></script>.</span>
 						</td>
 					</tr>		
-				</table>					
+				</table>
+
+				<h3>Advanced options</h3>
+				<table class="form-table">
+					<tr>
+						<th scope="row"><label for="twitget_use_custom">Use custom output</label></th>
+						<td>
+		    	            <input type="checkbox" name="twitget_use_custom" id="twitget_use_custom" value="true" <?php if($twitget_options['use_custom'] == true) { ?>checked="checked"<?php } ?> />
+							<br />
+            				<span class="description">Check this if you want to use a custom output defined in the textarea below. All HTML options from above will be ignored.</span>
+						</td>
+					</tr>		
+					<tr>
+						<th scope="row"><label for="twitget_instructions">Instructions and variables</label></th>
+						<td><span class="description">
+							<p>You can enter custom HTML in the box bellow and achieve the output you want.</p>
+							<p>When marking the output of your twitter feed you must include {$tweets_start} at the start of your twitter feed and {$tweets_end} in the end.</p> 
+
+							<strong><p>Available variables</p></strong>
+							{$tweet_text} - the text of the tweet<br />
+							{$tweet_time} - the time of the tweet<br />
+							{$tweet_location} - the location of the tweet (example: Budapest)<br />
+							{$profile_image} - the url to the profile image of the user<br />
+							{$user_real_name} - the real name of the user<br />
+							{$user_twitter_name} - username of the twitter user<br />
+							{$url} - website url of the user<br />
+							{$user_description} - description of the user<br />
+							{$user_location} - user location<br />
+							{$follower_count} - number of followers<br />
+							{$friends_count} - number of friends
+						</span>
+						</td>
+					</tr>		
+					<tr>
+						<th scope="row"><label for="twitget_custom_output">Use custom output</label></th>
+						<td>
+			    	            <textarea rows="10" cols="100" name="twitget_custom_output" id="twitget_custom_output" /><?php echo htmlentities($twitget_options['custom_string']); ?></textarea>
+					<br />
+            				<span class="description">Enter custom HTML for Twitget output.</span>
+						</td>
+					</tr>		
+				</table>
 				<p><input type="submit" name="Submit" class="button-primary" value="<?php esc_attr_e('Update options') ?>" /></p>
 				</form>
 
