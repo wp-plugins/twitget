@@ -22,12 +22,14 @@
 	add_action('widgets_init', create_function('', 'return register_widget("simple_tweet_widget");')); // Register the widget
 	
 	// Get current options
-	$plugin_options_settings = get_option('twitget_settings', true);
+	$plugin_options_settings = get_option('twitget_settings');
 
 	// Check if version is smaller and update
-	if((float) $plugin_options_settings['version'] < 1.31) {
-		twitget_update();
-	}
+	/*if(is_array($plugin_options_settings) && isset($plugin_options_settings['version'])) { 
+		if(((float) ($plugin_options_settings['version'])) < 1.31) {
+			twitget_update();
+		}
+	}*/
 	
 	function twitget_install() {
 	
@@ -66,14 +68,14 @@
 </ul>'
 
 		);
-
+		
 		add_option('twitget_settings', $plugin_options);
 
 	}
 	
 	function twitget_update() {
 		
-		$plugin_options_settings = get_option('twitget_settings', true);
+		$plugin_options_settings = get_option('twitget_settings');
 		
 		$plugin_options = array(
 			'twitter_username' => '',
