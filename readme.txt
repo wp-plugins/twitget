@@ -4,7 +4,7 @@ Donate link: http://gum.co/twitget
 Tags: twitter widget, twitter, simple twitter widget, custom twitter, widget, tweet, twitter sidebar, twitter 1.1 api
 Requires at least: 3.0
 Tested up to: 3.5
-Stable tag: 1.3
+Stable tag: 1.3.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -41,6 +41,9 @@ None at the moment.
 3. Widget settings page
 
 == Changelog ==
+
+= 1.3.1 =
+* Fixed an installation/update bug that resulted in unupdated values.
 
 = 1.3 =
 * Added the option to exclude replies
