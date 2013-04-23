@@ -4,7 +4,7 @@
 		Plugin Name: Twitget
 		Plugin URI: http://wpplugz.is-leet.com
 		Description: A simple widget that shows your recent tweets with fully customizable HTML output.
-		Version: 1.3
+		Version: 1.3.2
 		Author: Bostjan Cigan
 		Author URI: http://bostjan.gets-it.net
 		License: GPL v2
@@ -20,40 +20,34 @@
 	register_deactivation_hook(__FILE__, 'twitget_uninstall');
 	add_action('admin_menu', 'twitget_admin_menu_create');
 	add_action('widgets_init', create_function('', 'return register_widget("simple_tweet_widget");')); // Register the widget
-	$plugin_options = get_option('twitget_settings', true);
-		
-	if(!isset($plugin_options['version']) || $plugin_options['version'] < 1.3) {
-		twitget_update();
-	}
-
+	add_shortcode('twitget', 'twitget_shortcode_handler');
 	
-	function twitget_install() {
-
-		$plugin_options = array(
-			'twitter_username' => '',
-			'twitter_data' => NULL,
-			'last_access' => time(),
-			'time_limit' => 5,
-			'number_of_tweets' => 5,
-			'show_avatar' => true,
-			'after_image_html' => '<ul>',
-			'before_tweets_html' => '',
-			'tweet_start_html' => '<li>',
-			'tweet_middle_html' => '<br />',
-			'tweet_end_html' => '</li>',
-			'after_tweets_html' => '</ul>',
-			'time_format' => 'D jS M y H:i',
-			'show_powered_by' => false,
-			'version' => '1.3',
-			'consumer_key' => '',
-			'consumer_secret' => '',
-			'user_token' => '',
-			'user_secret' => '',
-			'mode' => 0,
-			'show_retweets' => false,
-			'exclude_replies' => false,
-			'use_custom' => false,
-			'custom_string' => '<img class="alignleft" src="{$profile_image}">
+	global $twitget_plugin_install_options;
+	$twitget_plugin_install_options = array(
+		'twitter_username' => '',
+		'twitter_data' => NULL,
+		'last_access' => time(),
+		'time_limit' => 5,
+		'number_of_tweets' => 5,
+		'show_avatar' => true,
+		'after_image_html' => '<ul>',
+		'before_tweets_html' => '',
+		'tweet_start_html' => '<li>',
+		'tweet_middle_html' => '<br />',
+		'tweet_end_html' => '</li>',
+		'after_tweets_html' => '</ul>',
+		'time_format' => 'D jS M y H:i',
+		'show_powered_by' => false,
+		'version' => '1.32',
+		'consumer_key' => '',
+		'consumer_secret' => '',
+		'user_token' => '',
+		'user_secret' => '',
+		'mode' => 0,
+		'show_retweets' => false,
+		'exclude_replies' => false,
+		'use_custom' => false,
+		'custom_string' => '<img class="alignleft" src="{$profile_image}">
 <a href="https://www.twitter.com/{$user_twitter_name}">{$user_twitter_name}</a>
 <br />
 {$user_description}
@@ -62,69 +56,34 @@
 	<li>{$tweet_text}<br />{$tweet_time}</li>
 {$tweets_end}
 </ul>'
-		);			
 
-		add_option('twitget_settings', $plugin_options);
+	);
 	
+	// Get current options
+	$plugin_options_settings = get_option('twitget_settings');
+
+	// Check if version is smaller and update
+	if(is_array($plugin_options_settings) && isset($plugin_options_settings['version'])) { 
+		if(((float) ($plugin_options_settings['version'])) < 1.32) {
+			twitget_update();
+		}
+	}
+	
+	function twitget_install() {
+		global $twitget_plugin_install_options;
+		add_option('twitget_settings', $twitget_plugin_install_options);
 	}
 	
 	function twitget_update() {
 		
-		$plugin_options = get_option('twitget_settings', true);
+		global $twitget_plugin_install_options;
+		$plugin_options_settings = get_option('twitget_settings');		
 		
-		$update = false;
-		
-		if(!isset($plugin_options['version'])) {
-			$plugin_options['version'] = '1.3';
-			$update = true;
-		}
-		
-		// This is for backward purposes only, one screwed update was the cause
-		$plugin_orig = array(
-			'twitter_username' => '',
-			'twitter_data' => NULL,
-			'last_access' => time(),
-			'time_limit' => 5,
-			'number_of_tweets' => 5,
-			'show_avatar' => true,
-			'after_image_html' => '<ul>',
-			'before_tweets_html' => '',
-			'tweet_start_html' => '<li>',
-			'tweet_middle_html' => '<br />',
-			'tweet_end_html' => '</li>',
-			'after_tweets_html' => '</ul>',
-			'time_format' => 'D jS M y H:i',
-			'show_powered_by' => false,
-			'version' => '1.3',
-			'consumer_key' => '',
-			'consumer_secret' => '',
-			'user_token' => '',
-			'user_secret' => '',
-			'mode' => 0,
-			'show_retweets' => false,
-			'exclude_replies' => false,
-			'show_relative_time' => false,
-			'use_custom' => false,
-			'custom_string' => '<img class="alignleft" src="{$profile_image}">
-<a href="https://www.twitter.com/{$user_twitter_name}">{$user_twitter_name}</a>
-<br />
-{$user_description}
-<ul class="pages">
-{$tweets_start}
-	<li>{$tweet_text}<br />{$tweet_time}</li>
-{$tweets_end}
-</ul>'
-		);		
-		
-		if(($plugin_options['version'] < 1.3) || $update) {
-			$plugin_options['version'] = '1.3';
-			foreach($plugin_orig as $key => $value) {
-				$plugin_options[$key] = (isset($plugin_options[$key]) && strlen($plugin_options[$key]) > 0) ? $plugin_options[$key] : $value;
+		if((float) $plugin_options_settings['version'] < 1.32) {
+			foreach($twitget_plugin_install_options as $key => $value) {
+				$plugin_options_settings[$key] = (isset($plugin_options_settings[$key]) && strcmp($key, "version") != 0) ? $plugin_options_settings[$key] : $value;
 			}
-			$plugin_options['time_limit'] = ($plugin_options['time_limit'] > 0) ? $plugin_options['time_limit'] : 5;
-			$plugin_options['number_of_tweets'] = ($plugin_options['number_of_tweets'] > 0) ? $plugin_options['number_of_tweets'] : 5;
-			
-			update_option('twitget_settings', $plugin_options);
+			update_option('twitget_settings', $plugin_options_settings);
 		}
 		
 	}
@@ -135,6 +94,11 @@
 
 	function twitget_admin_menu_create() {
 		add_options_page('Twitget Settings', 'Twitget', 'administrator', __FILE__, 'twitget_settings');	
+	}
+
+	// Shortcode function
+	function twitget_shortcode_handler($attributes, $content = null) {
+		return show_recent_tweets();
 	}
 
 	function twitter_status_11() {
@@ -448,7 +412,7 @@
 		}
 
 		$twitget_options = get_option('twitget_settings', true);
-				
+		
 ?>
 
 		<div id="icon-options-general" class="icon32"></div><h2>Twitget Settings</h2>
@@ -473,7 +437,7 @@
 					<tr>
 						<th scope="row"><img src="<?php echo plugin_dir_url(__FILE__).'twitter.png'; ?>" height="96px" width="96px" /></th>
 						<td>
-							<p>Thank you for using this plugin. If you like the plugin, you can <a href="http://gum.co/twitget">buy me a cup of coffee</a><script type="text/javascript" src="https://gumroad.com/js/gumroad-button.js"></script><script type="text/javascript" src="https://gumroad.com/js/gumroad.js"></script> :)</p> 
+							<p>Thank you for using this plugin. If you like the plugin, you can <a href="http://gum.co/twitget" target="_blank">buy me a cup of coffee</a> :)</p> 
 							<p>Visit the official website @ <a href="http://wpplugz.is-leet.com">wpPlugz</a>.</p>
 							<p>This plugin uses the <a href="https://github.com/themattharris/tmhOAuth">tmhOAuth</a> library by Matt Harris.</p>
                         </td>
@@ -643,7 +607,7 @@
 						<td>
 		    	            <input type="checkbox" name="twitget_show_powered" id="twitget_show_powered" value="true" <?php if($twitget_options['show_powered_by'] == true) { ?>checked="checked"<?php } ?> />
 							<br />
-            				<span class="description">Show powered by message, if you decide not to show it, please consider a <a href="http://gum.co/twitget">donation</a><script type="text/javascript" src="https://gumroad.com/js/gumroad-button.js"></script><script type="text/javascript" src="https://gumroad.com/js/gumroad.js"></script>.</span>
+            				<span class="description">Show powered by message, if you decide not to show it, please consider a <a href="http://gum.co/twitget" target="_blank">donation</a>.</span>
 						</td>
 					</tr>		
 				</table>
