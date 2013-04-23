@@ -4,7 +4,7 @@ Donate link: http://gum.co/twitget
 Tags: twitter widget, twitter, simple twitter widget, custom twitter, widget, tweet, twitter sidebar, twitter 1.1 api
 Requires at least: 3.0
 Tested up to: 3.5
-Stable tag: 1.3.1
+Stable tag: 1.3.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -28,7 +28,7 @@ What this plugin offers:
 1. Upload the plugin directory to to the '/wp-content/plugins/' directory
 2. Activate the plugin through the 'Plugins' menu in WordPress
 3. Customize the settings in Settings->Twitget
-4. Add the widget to the desired location.
+4. Add the widget to the desired location or use a shortcode [twitget] in your posts
 
 == Frequently Asked Questions ==
 
@@ -41,6 +41,10 @@ None at the moment.
 3. Widget settings page
 
 == Changelog ==
+
+= 1.3.2 =
+* Fixed update procedure, with less hassle
+* Added shortcode support in posts.
 
 = 1.3.1 =
 * Fixed an installation/update bug that resulted in unupdated values.
