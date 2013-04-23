@@ -99,5 +99,7 @@ Thank you to the following people who have donated so far:
 * Aaron
 * Corinne
 * Civil Society Trust
+* Kay Grant
+* JD Kitchens
 
 I appreciate your support!
