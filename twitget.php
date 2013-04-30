@@ -95,6 +95,7 @@
 				unset($plugin_options_settings[$key]);
 			}
 			unset($plugin_options_settings['use_custom']);
+			$plugin_options_settings['version'] = '2.0';
 			update_option('twitget_settings', $plugin_options_settings);
 		}
 		
@@ -360,10 +361,9 @@
 		$twitget_settings = get_option('twitget_settings', true);
 		$message = '';
 		
-		if(isset($_POST['twitget_username'])) {
+		if(isset($_POST['twitget_username'])) {		
 		
 			$show_powered = $_POST['twitget_show_powered'];
-			$show_avatar = $_POST['twitget_show_avatar'];
 			$show_retweets = $_POST['twitget_retweets'];
 			$twitget_exclude = $_POST['twitget_exclude_replies'];
 			$twitget_relative = $_POST['twitget_relative_time'];
@@ -372,15 +372,8 @@
 			$twitget_settings['twitter_username'] = stripslashes($_POST['twitget_username']);
 			$twitget_settings['time_limit'] = (int) $_POST['twitget_refresh'];
 			$twitget_settings['number_of_tweets'] = (int) $_POST['twitget_number'];
-			$twitget_settings['show_avatar'] = (isset($show_avatar)) ? true : false;
 			$twitget_settings['time_format'] = stripslashes($_POST['twitget_time']);
 			$twitget_settings['show_powered_by'] = (isset($show_powered)) ? true : false;
-			$twitget_settings['tweet_start_html'] = stripslashes($_POST['twitget_before_tweets_html']);
-			$twitget_settings['tweet_middle_html'] = stripslashes($_POST['twitget_tweet_middle_html']);
-			$twitget_settings['tweet_end_html'] = stripslashes($_POST['twitget_tweet_end_html']);
-			$twitget_settings['after_tweets_html'] = stripslashes($_POST['twitget_after_tweets_html']);
-			$twitget_settings['after_image_html'] = stripslashes($_POST['twitget_after_image_html']);
-			$twitget_settings['before_tweets_html'] = stripslashes($_POST['twitget_before_profile_html']);
 			$twitget_settings['consumer_key'] = stripslashes($_POST['twitget_consumer_key']);
 			$twitget_settings['consumer_secret'] = stripslashes($_POST['twitget_consumer_secret']);
 			$twitget_settings['user_token'] = stripslashes($_POST['twitget_user_token']);
@@ -530,15 +523,7 @@
 							<br />
             				<span class="description">Check this if you want to exclude replies in your feed.</span>
 						</td>
-					</tr>		
-					<tr>
-						<th scope="row"><label for="twitget_show_avatar">Show profile box</label></th>
-						<td>
-		    	            <input type="checkbox" name="twitget_show_avatar" id="twitget_show_avatar" value="true" <?php if($twitget_options['show_avatar'] == true) { ?>checked="checked"<?php } ?> />
-							<br />
-            				<span class="description">Show the profile box before tweets (including the avatar).</span>
-						</td>
-					</tr>		
+					</tr>
 					<tr>
 						<th scope="row"><label for="twitget_relative_time">Show relative time</label></th>
 						<td>
