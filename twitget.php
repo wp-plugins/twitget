@@ -1,14 +1,17 @@
 <?php
-
 	/* 
 		Plugin Name: Twitget
 		Plugin URI: http://wpplugz.is-leet.com
 		Description: A simple widget that shows your recent tweets with fully customizable HTML output, hashtag support and more.
-		Version: 2.0
+		Version: 2.1
 		Author: Bostjan Cigan
 		Author URI: http://bostjan.gets-it.net
 		License: GPL v2
 	*/ 
+
+	if(!session_id()) {
+		session_start();
+	}
 
 	// Wordpress formalities here ...
 	
@@ -25,6 +28,8 @@
 	add_action('admin_menu', 'twitget_admin_menu_create');
 	add_action('widgets_init', create_function('', 'return register_widget("simple_tweet_widget");')); // Register the widget
 	add_shortcode('twitget', 'twitget_shortcode_handler');
+	add_action('wp_head', 'twitget_header_timezone'); // Add the script to Wordpress header if Twitter times are shown in users browsers time
+	add_action('init', 'twitget_set_cookie');
 	
 	global $twitget_plugin_install_options;
 	$twitget_plugin_install_options = array(
@@ -36,15 +41,18 @@
 		'show_avatar' => true,
 		'time_format' => 'D jS M y H:i',
 		'show_powered_by' => false,
-		'version' => '2.0',
+		'version' => '2.1',
 		'consumer_key' => '',
 		'consumer_secret' => '',
 		'user_token' => '',
 		'user_secret' => '',
 		'mode' => 0,
+		'cookie_expiration' => 24,
+		'use_cookie' => false,
 		'show_local_time' => true,
 		'show_retweets' => false,
 		'exclude_replies' => false,
+		'show_browser_time' => false,
 		'custom_string' => '<img class="alignleft" src="{$profile_image}">
 <a href="https://www.twitter.com/{$user_twitter_name}">@{$user_twitter_name}</a>
 <br />
@@ -62,7 +70,7 @@
 
 	// Check if version is smaller and update
 	if(is_array($plugin_options_settings) && isset($plugin_options_settings['version'])) { 
-		if(((float) ($plugin_options_settings['version'])) < 2.0) {
+		if(((float) ($plugin_options_settings['version'])) < ((float) ($twitget_plugin_install_options['version']))) {
 			twitget_update();
 		}
 	}
@@ -87,7 +95,7 @@
 			'after_tweets_html'
 		);
 		
-		if((float) $plugin_options_settings['version'] < 2.0) {
+		if((float) $plugin_options_settings['version'] < (float) $twitget_plugin_install_options['version']) {
 			foreach($twitget_plugin_install_options as $key => $value) {
 				$plugin_options_settings[$key] = (isset($plugin_options_settings[$key]) && strcmp($key, "version") != 0) ? $plugin_options_settings[$key] : $value;
 			}
@@ -95,6 +103,7 @@
 				unset($plugin_options_settings[$key]);
 			}
 			unset($plugin_options_settings['use_custom']);
+			$plugin_options_settings['version'] = $twitget_plugin_install_options['version'];
 			update_option('twitget_settings', $plugin_options_settings);
 		}
 		
@@ -115,7 +124,7 @@
 
 	function twitter_status_11() {
 	
-		$options = get_option('twitget_settings', true);
+		$options = get_option('twitget_settings');
 
 		$tmhOAuth = new tmhOAuth(
 									array(
@@ -145,7 +154,7 @@
 	
 	function twitter_status() {  
 
-		$options = get_option('twitget_settings', true);
+		$options = get_option('twitget_settings');
 		$twitter_id = $options['twitter_username'];
 		$number_limit = $options['number_of_tweets'];
 		$curl = curl_init();
@@ -176,11 +185,42 @@
 		return $text;
 
 	}
- 
+
+	function twitget_set_cookie() {
+	
+		$options = get_option('twitget_settings');
+	
+		if($options['show_browser_time']) {
+			$timezone = $_SESSION['timezone'];
+			if(isset($timezone)) {
+				if(!isset($_COOKIE['wp_twitget_timezone'])) {
+					setcookie("wp_twitget_timezone", $timezone, time() + 3600 * $options['cookie_expiration'], COOKIEPATH, COOKIE_DOMAIN, false);
+				}
+				else {
+					if(strcmp($_COOKIE['wp_twitget_timezone'], $timezone) != 0) {
+						setcookie("wp_twitget_timezone", $timezone, time() + 3600 * $options['cookie_expiration'], COOKIEPATH, COOKIE_DOMAIN, false);
+					}
+				}
+			}
+		}
+		else {
+			if(isset($_COOKIE['wp_twitget_timezone'])) {
+				setcookie("wp_twitget_timezone", $timezone, time() - 3600 * 24, COOKIEPATH, COOKIE_DOMAIN, false);
+			}
+		}
+		
+	}
+
+	
 	function show_recent_tweets() {
 
-		$options = get_option('twitget_settings', true);
+		$options = get_option('twitget_settings');
 		$get_data = false;
+		
+		$timezone = $_SESSION['timezone'];
+		if(isset($options['use_cookie']) && isset($_COOKIE['wp_twitget_timezone'])) {
+			$timezone = intval($_COOKIE['wp_twitget_timezone']);
+		}
 		
 		if(!isset($options['twitter_data'])) {
 			$get_data = true;
@@ -201,7 +241,7 @@
 			}
 		}
 		
-		$options = get_option('twitget_settings', true);
+		$options = get_option('twitget_settings');
 		$tweets = $options['twitter_data'];
 		$limit = $options['number_of_tweets'];
 
@@ -239,6 +279,14 @@
 			if($options['show_local_time']) {
 				$offset = $tweet['user']['utc_offset'];
 				if(isset($offset)) {
+					$tweet_time = $tweet_time + $offset;
+				}
+			}
+			else if($options['show_browser_time']) {
+				if(isset($timezone)) {
+					$timezone_cast = (float) $timezone;
+					$offset = $timezone_cast * 3600;
+					$offset = intval($offset);
 					$tweet_time = $tweet_time + $offset;
 				}
 			}
@@ -353,50 +401,115 @@
 
 		return sprintf($diff > 1 ? '%s years ago' : 'Last year', $diff);
 
-	}	
+	}
+
+	function twitget_header_timezone() {
+	
+		$options = get_option('twitget_settings');
+	
+		$timezone = $_SESSION['timezone'];
+		
+		// Yes I know this can be done in JQuery, but with all the hasle if another plugin is using
+		// another version of JQuery or somebody include the JQuery lib without using enqueue
+		// this is just safer :)
+		
+		if($options['show_browser_time']) {
+	
+?>
+
+			<script type="text/javascript">
+				// Twitget Javascript for saving clients browser timezone //
+				// ****************************************************** //
+				// Yes I know this can be done in JQuery, but with all the hasle if another plugin is using
+				// another version of JQuery or somebody include the JQuery lib without using enqueue
+				// this is just "safer" :)
+				function set_timezone() {
+					var ajaxRequest;
+					
+					try{
+						// Opera 8.0+, Firefox, Safari
+						ajaxRequest = new XMLHttpRequest();
+					} catch (e){
+						// Internet Explorer Browsers
+						try{
+							ajaxRequest = new ActiveXObject("Msxml2.XMLHTTP");
+						} catch (e) {
+							try{
+								ajaxRequest = new ActiveXObject("Microsoft.XMLHTTP");
+							} catch (e){
+								// Something went wrong
+								alert("Your browser broke!");
+								return false;
+							}
+						}
+					}
+					var current_date = new Date();
+					var gmt_offset = current_date.getTimezoneOffset( ) / 60;
+					var queryString = "?time="+gmt_offset;
+					var redirect = "<?php $redirect = plugin_dir_url(__FILE__).'timezone.php'; echo $redirect; ?>";
+					ajaxRequest.open("GET", redirect + "" + queryString, true);
+					ajaxRequest.send(null); 
+				}
+				
+				if("<?php echo $_SESSION['timezone']; ?>".length == 0) {
+					set_timezone();
+				}
+			</script>
+<?		
+	
+		}
+	
+	}
 		
 	function twitget_settings() {
 	
-		$twitget_settings = get_option('twitget_settings', true);
+		$twitget_settings = get_option('twitget_settings');
 		$message = '';
 		
-		if(isset($_POST['twitget_username'])) {
+		if(isset($_POST['twitget_username'])) {		
 		
 			$show_powered = $_POST['twitget_show_powered'];
-			$show_avatar = $_POST['twitget_show_avatar'];
 			$show_retweets = $_POST['twitget_retweets'];
 			$twitget_exclude = $_POST['twitget_exclude_replies'];
 			$twitget_relative = $_POST['twitget_relative_time'];
 			$twitget_custom = $_POST['twitget_use_custom'];
-		
-			$twitget_settings['twitter_username'] = stripslashes($_POST['twitget_username']);
-			$twitget_settings['time_limit'] = (int) $_POST['twitget_refresh'];
-			$twitget_settings['number_of_tweets'] = (int) $_POST['twitget_number'];
-			$twitget_settings['show_avatar'] = (isset($show_avatar)) ? true : false;
-			$twitget_settings['time_format'] = stripslashes($_POST['twitget_time']);
-			$twitget_settings['show_powered_by'] = (isset($show_powered)) ? true : false;
-			$twitget_settings['tweet_start_html'] = stripslashes($_POST['twitget_before_tweets_html']);
-			$twitget_settings['tweet_middle_html'] = stripslashes($_POST['twitget_tweet_middle_html']);
-			$twitget_settings['tweet_end_html'] = stripslashes($_POST['twitget_tweet_end_html']);
-			$twitget_settings['after_tweets_html'] = stripslashes($_POST['twitget_after_tweets_html']);
-			$twitget_settings['after_image_html'] = stripslashes($_POST['twitget_after_image_html']);
-			$twitget_settings['before_tweets_html'] = stripslashes($_POST['twitget_before_profile_html']);
-			$twitget_settings['consumer_key'] = stripslashes($_POST['twitget_consumer_key']);
-			$twitget_settings['consumer_secret'] = stripslashes($_POST['twitget_consumer_secret']);
-			$twitget_settings['user_token'] = stripslashes($_POST['twitget_user_token']);
-			$twitget_settings['user_secret'] = stripslashes($_POST['twitget_user_secret']);
-			$twitget_settings['mode'] = (int) ($_POST['twitget_api']);
-			$twitget_settings['show_retweets'] = (isset($show_retweets)) ? true : false;
-			$twitget_settings['show_local_time'] = (isset($_POST['twitget_show_local_time'])) ? true : false;
-			$twitget_settings['exclude_replies'] = (isset($twitget_exclude)) ? true : false;
-			$twitget_settings['show_relative_time'] = (isset($twitget_relative)) ? true : false;
-			$twitget_settings['use_custom'] = (isset($twitget_custom)) ? true : false;
-			$twitget_settings['custom_string'] = stripslashes(html_entity_decode($_POST['twitget_custom_output']));
-			update_option('twitget_settings', $twitget_settings);
-			$message = "Settings updated.";
+			$twitget_client_time = $_POST['twitget_client_time'];
+			$twitget_local_time = $_POST['twitget_show_local_time'];
+			$use_cookie = $_POST['twitget_timezone_cookie'];
+
+			$continue = true;
+			
+			if(isset($twitget_client_time) && isset($twitget_local_time)) {
+				$message = "You can not set the times in local times and browsers times at the same time. Please select only one option.";
+				$continue = false;
+			}
+
+			if($continue) {
+				$twitget_settings['twitter_username'] = stripslashes($_POST['twitget_username']);
+				$twitget_settings['time_limit'] = (int) $_POST['twitget_refresh'];
+				$twitget_settings['number_of_tweets'] = (int) $_POST['twitget_number'];
+				$twitget_settings['time_format'] = stripslashes($_POST['twitget_time']);
+				$twitget_settings['show_powered_by'] = (isset($show_powered)) ? true : false;
+				$twitget_settings['consumer_key'] = stripslashes($_POST['twitget_consumer_key']);
+				$twitget_settings['consumer_secret'] = stripslashes($_POST['twitget_consumer_secret']);
+				$twitget_settings['user_token'] = stripslashes($_POST['twitget_user_token']);
+				$twitget_settings['user_secret'] = stripslashes($_POST['twitget_user_secret']);
+				$twitget_settings['mode'] = (int) ($_POST['twitget_api']);
+				$twitget_settings['show_retweets'] = (isset($show_retweets)) ? true : false;
+				$twitget_settings['exclude_replies'] = (isset($twitget_exclude)) ? true : false;
+				$twitget_settings['show_local_time'] = (isset($twitget_local_time)) ? true : false;
+				$twitget_settings['show_browser_time'] = (isset($twitget_client_time)) ? true : false;
+				$twitget_settings['show_relative_time'] = (isset($twitget_relative)) ? true : false;
+				$twitget_settings['use_custom'] = (isset($twitget_custom)) ? true : false;
+				$twitget_settings['cookie_expiration'] = intval($_POST['twitget_client_time_cookie']);
+				$twitget_settings['use_cookie'] = (isset($use_cookie)) ? true : false;
+				$twitget_settings['custom_string'] = stripslashes(html_entity_decode($_POST['twitget_custom_output']));
+				update_option('twitget_settings', $twitget_settings);
+				$message = "Settings updated.";
+			}
 		}
 
-		$twitget_options = get_option('twitget_settings', true);
+		$twitget_options = get_option('twitget_settings');
 		
 ?>
 
@@ -417,6 +530,21 @@
 
 ?>
         
+			<script type="text/javascript">
+				// You can not select local and browser time at the same time, so exclude these two choices
+				function set_local_time() {
+					var browser_time = document.getElementById("twitget_client_time").checked;
+					if(browser_time) {
+						document.getElementById("twitget_client_time").checked = false;
+					}
+				}
+				function set_browser_time() {
+					var local_time = document.getElementById("twitget_show_local_time").checked;
+					if(local_time) {
+						document.getElementById("twitget_show_local_time").checked = false;
+					}
+				}
+			</script>
                 <form method="post" action="">
 				<table class="form-table">
 					<tr>
@@ -518,11 +646,35 @@
 					<tr>
 						<th scope="row"><label for="twitget_show_local_time">Show local time</label></th>
 						<td>
-		    	            <input type="checkbox" name="twitget_show_local_time" id="twitget_show_local_time" value="true" <?php if($twitget_options['show_local_time'] == true) { ?>checked="checked"<?php } ?> />
+		    	            <input type="checkbox" name="twitget_show_local_time" id="twitget_show_local_time" onchange="set_local_time();" value="true" <?php if($twitget_options['show_local_time'] == true) { ?>checked="checked"<?php } ?> />
 							<br />
             				<span class="description">Check this if you want to output tweets times in your local time (will only work if you've set a timezone in your Twitter account settings).</span>
 						</td>
 					</tr>		
+					<tr>
+						<th scope="row"><label for="twitget_client_time">Show client time</label></th>
+						<td>
+		    	            <input type="checkbox" name="twitget_client_time" id="twitget_client_time" value="true" onchange="set_browser_time();" <?php if($twitget_options['show_browser_time'] == true) { ?>checked="checked"<?php } ?> />
+							<br />
+            				<span class="description">Check this if you want the Tweets to be shown in clients timezone times. This option only works if the user who is viewing the page has Javascript enabled.</span>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="twitget_timezone_cookie">Timezone cookie</label></th>
+						<td>
+		    	            <input type="checkbox" name="twitget_timezone_cookie" id="timezone_cookie" value="true" <?php if($twitget_options['use_cookie'] == true) { ?>checked="checked"<?php } ?> />
+							<br />
+            				<span class="description">Check this if you want to use a cookie to store a clients timezone. If not checked, the timezone is stored in a session.</span>
+						</td>
+					</tr>		
+					<tr>
+						<th scope="row"><label for="twitget_client_time_cookie">Expiration of timezone cookie</label></th>
+						<td>
+							<input type="text" name="twitget_client_time_cookie" id="twitget_client_time_cookie" value="<?php echo $twitget_options['cookie_expiration']; ?>" />
+							<br />
+            				<span class="description">In how many hours does the timezone cookie expire.</span>
+						</td>
+					</tr>
 					<tr>
 						<th scope="row"><label for="twitget_exclude_replies">Exclude replies</label></th>
 						<td>
@@ -530,15 +682,7 @@
 							<br />
             				<span class="description">Check this if you want to exclude replies in your feed.</span>
 						</td>
-					</tr>		
-					<tr>
-						<th scope="row"><label for="twitget_show_avatar">Show profile box</label></th>
-						<td>
-		    	            <input type="checkbox" name="twitget_show_avatar" id="twitget_show_avatar" value="true" <?php if($twitget_options['show_avatar'] == true) { ?>checked="checked"<?php } ?> />
-							<br />
-            				<span class="description">Show the profile box before tweets (including the avatar).</span>
-						</td>
-					</tr>		
+					</tr>
 					<tr>
 						<th scope="row"><label for="twitget_relative_time">Show relative time</label></th>
 						<td>
