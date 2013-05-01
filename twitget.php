@@ -662,7 +662,7 @@
 					<tr>
 						<th scope="row"><label for="twitget_timezone_cookie">Timezone cookie</label></th>
 						<td>
-		    	            <input type="checkbox" name="twitget_timezone_cookie" id="timezone_cookie" value="true" <?php if($twitget_options['use_cookie'] == true) { ?>checked="checked"<?php } ?> />
+		    	            <input type="checkbox" name="twitget_timezone_cookie" id="twitget_timezone_cookie" value="true" <?php if($twitget_options['use_cookie'] == true) { ?>checked="checked"<?php } ?> />
 							<br />
             				<span class="description">Check this if you want to use a cookie to store a clients timezone. If not checked, the timezone is stored in a session.</span>
 						</td>
