@@ -4,7 +4,7 @@
 		Plugin Name: Twitget
 		Plugin URI: http://wpplugz.is-leet.com
 		Description: A simple widget that shows your recent tweets with fully customizable HTML output, hashtag support and more.
-		Version: 2.0
+		Version: 2.0.1
 		Author: Bostjan Cigan
 		Author URI: http://bostjan.gets-it.net
 		License: GPL v2
@@ -36,7 +36,7 @@
 		'show_avatar' => true,
 		'time_format' => 'D jS M y H:i',
 		'show_powered_by' => false,
-		'version' => '2.0',
+		'version' => '2.01',
 		'consumer_key' => '',
 		'consumer_secret' => '',
 		'user_token' => '',
@@ -62,7 +62,7 @@
 
 	// Check if version is smaller and update
 	if(is_array($plugin_options_settings) && isset($plugin_options_settings['version'])) { 
-		if(((float) ($plugin_options_settings['version'])) < 2.0) {
+		if(((float) ($plugin_options_settings['version'])) < ((float) ($twitget_plugin_install_options['version']))) {
 			twitget_update();
 		}
 	}
@@ -87,7 +87,7 @@
 			'after_tweets_html'
 		);
 		
-		if((float) $plugin_options_settings['version'] < 2.0) {
+		if((float) $plugin_options_settings['version'] < (float) $twitget_plugin_install_options['version']) {
 			foreach($twitget_plugin_install_options as $key => $value) {
 				$plugin_options_settings[$key] = (isset($plugin_options_settings[$key]) && strcmp($key, "version") != 0) ? $plugin_options_settings[$key] : $value;
 			}
@@ -95,7 +95,7 @@
 				unset($plugin_options_settings[$key]);
 			}
 			unset($plugin_options_settings['use_custom']);
-			$plugin_options_settings['version'] = '2.0';
+			$plugin_options_settings['version'] = $twitget_plugin_install_options['version'];
 			update_option('twitget_settings', $plugin_options_settings);
 		}
 		
@@ -389,7 +389,7 @@
 			$message = "Settings updated.";
 		}
 
-		$twitget_options = get_option('twitget_settings', true);
+		$twitget_options = get_option('twitget_settings');
 		
 ?>
 
