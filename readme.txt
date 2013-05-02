@@ -4,7 +4,7 @@ Donate link: http://gum.co/twitget
 Tags: twitter widget, twitter, simple twitter widget, custom twitter, widget, tweet, twitter sidebar, twitter 1.1 api, feed
 Requires at least: 3.0
 Tested up to: 3.5
-Stable tag: 2.0
+Stable tag: 2.1.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,7 @@ What this plugin offers:
 * Show profile box
 * Customize entire HTML output
 * Twitter API 1.1 support
+* Show Twitter times in clients browser timezone
 
 == Installation ==
 
@@ -42,6 +43,15 @@ None at the moment.
 4. Available variables for custom HTML output and example
 
 == Changelog ==
+
+= 2.1.1 =
+* [Fix] Fixed a shortcode <? instead of <?php problem.
+
+= 2.1 =
+* Added support to show tweet times in clients browser timezone.
+
+= 2.0.1 =
+* [Fix] Fixed an update bug, please update your plugin ASAP, because it can slow down performance.
 
 = 2.0 =
 * [New] Added new variables: reply, retweet, favorite, tweet link
@@ -87,6 +97,9 @@ None at the moment.
 * Initial version.
 
 == Upgrade Notice ==
+
+= 2.0.1 =
+Please urgently update, the plugin keeps updating itself because the version variable is not set correctly and it also slows down plugin performance.
 
 = 2.0 =
 This upgrade deprecates all previous HTML fields (before, after, suffix, before tweet etc.) and instead uses the provided custom HTML output template.
