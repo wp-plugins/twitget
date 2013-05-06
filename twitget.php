@@ -251,7 +251,7 @@
 		$options = get_option('twitget_settings');
 		$tweets = $options['twitter_data'];
 		
-		if(is_array($tweets) && isset($tweets)) {
+		if(is_array($tweets) && isset($tweets) && isset($tweets[0]['user'])) {
 
 			$limit = $options['number_of_tweets'];
 
@@ -353,11 +353,11 @@
 			}
 		
 		}
-
-		if(!isset($tweets)) {
-			$result = "Something went very wrong or Twitters APIs are down.";
+		else {
+			$result = "Twitter outputted an error: <br />";
+			$result .= $tweets['errors'][0]['message'].".";
 		}
-		
+
 		echo $result;
 
 	}
