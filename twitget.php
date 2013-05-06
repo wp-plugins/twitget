@@ -3,7 +3,7 @@
 		Plugin Name: Twitget
 		Plugin URI: http://wpplugz.is-leet.com
 		Description: A simple widget that shows your recent tweets with fully customizable HTML output, hashtag support and more.
-		Version: 2.1.1
+		Version: 2.1.2
 		Author: Bostjan Cigan
 		Author URI: http://bostjan.gets-it.net
 		License: GPL v2
@@ -146,7 +146,12 @@
 		$response = $tmhOAuth->response['response'];
 		$tweets = json_decode($response, true);
 		
-		$options['twitter_data'] = $tweets;
+		if(is_array($tweets)) {
+			$options['twitter_data'] = (array) $tweets;
+		}
+		else {
+			$options['twitter_data'] = NULL;
+		}
 
 		update_option('twitget_settings', $options);
 	
@@ -191,14 +196,16 @@
 		$options = get_option('twitget_settings');
 	
 		if($options['show_browser_time']) {
-			$timezone = $_SESSION['timezone'];
-			if(isset($timezone)) {
-				if(!isset($_COOKIE['wp_twitget_timezone'])) {
-					setcookie("wp_twitget_timezone", $timezone, time() + 3600 * $options['cookie_expiration'], COOKIEPATH, COOKIE_DOMAIN, false);
-				}
-				else {
-					if(strcmp($_COOKIE['wp_twitget_timezone'], $timezone) != 0) {
+			if(isset($_SESSION['timezone'])) {
+				$timezone = $_SESSION['timezone'];
+				if(isset($timezone)) {
+					if(!isset($_COOKIE['wp_twitget_timezone'])) {
 						setcookie("wp_twitget_timezone", $timezone, time() + 3600 * $options['cookie_expiration'], COOKIEPATH, COOKIE_DOMAIN, false);
+					}
+					else {
+						if(strcmp($_COOKIE['wp_twitget_timezone'], $timezone) != 0) {
+							setcookie("wp_twitget_timezone", $timezone, time() + 3600 * $options['cookie_expiration'], COOKIEPATH, COOKIE_DOMAIN, false);
+						}
 					}
 				}
 			}
@@ -217,7 +224,7 @@
 		$options = get_option('twitget_settings');
 		$get_data = false;
 		
-		$timezone = $_SESSION['timezone'];
+		$timezone = (isset($_SESSION['timezone'])) ? $_SESSION['timezone'] : NULL;
 		if(isset($options['use_cookie']) && isset($_COOKIE['wp_twitget_timezone'])) {
 			$timezone = intval($_COOKIE['wp_twitget_timezone']);
 		}
@@ -243,103 +250,112 @@
 		
 		$options = get_option('twitget_settings');
 		$tweets = $options['twitter_data'];
-		$limit = $options['number_of_tweets'];
-
-		$image_url = $tweets[0]['user']['profile_image_url']; // {$profile_image}
-		$twitter_username = $tweets[0]['user']['screen_name']; // {$user_twitter_name}
-		$twitter_username_real = $tweets[0]['user']['name']; // {$user_real_name}
-		$twitter_user_url = $tweets[0]['user']['url']; // {$url}
-		$twitter_user_description = $tweets[0]['user']['description']; // {$user_description}
-		$twitter_follower_count = $tweets[0]['user']['followers_count']; // {$follower_count}
-		$twitter_friends_count = $tweets[0]['user']['friends_count']; // {$friends_count}
-		$twitter_user_location = $tweets[0]['user']['location']; // {$user_location}		
-
-		$result = "";
-
-		$custom_string = $options['custom_string'];
-		$feed_string = twitget_get_substring($custom_string, "{\$tweets_start}", "{\$tweets_end}");
 		
-		$feed_whole_string = "";
+		if(is_array($tweets) && isset($tweets)) {
 
-		$i = 0;
-		foreach($tweets as $tweet) {
-			$tweet_text = $tweet['text'];
-			$tweet_location = $tweet['place']['full_name'];
-			$link_processed = "";
-			if(isset($tweet['retweeted_status'])) {
-				$first = current(explode(":", $tweet_text));
-				$whole_tweet = $first.": ";
-				$whole_tweet .= $tweet['retweeted_status']['text'];
-				$link_processed = process_links($whole_tweet);
-			}
-			else {
-				$link_processed = process_links($tweet['text']);
-			}
-			$tweet_time = strtotime($tweet['created_at']);
-			if($options['show_local_time']) {
-				$offset = $tweet['user']['utc_offset'];
-				if(isset($offset)) {
-					$tweet_time = $tweet_time + $offset;
+			$limit = $options['number_of_tweets'];
+
+			$image_url = $tweets[0]['user']['profile_image_url']; // {$profile_image}
+			$twitter_username = $tweets[0]['user']['screen_name']; // {$user_twitter_name}
+			$twitter_username_real = $tweets[0]['user']['name']; // {$user_real_name}
+			$twitter_user_url = $tweets[0]['user']['url']; // {$url}
+			$twitter_user_description = $tweets[0]['user']['description']; // {$user_description}
+			$twitter_follower_count = $tweets[0]['user']['followers_count']; // {$follower_count}
+			$twitter_friends_count = $tweets[0]['user']['friends_count']; // {$friends_count}
+			$twitter_user_location = $tweets[0]['user']['location']; // {$user_location}		
+
+			$result = "";
+
+			$custom_string = $options['custom_string'];
+			$feed_string = twitget_get_substring($custom_string, "{\$tweets_start}", "{\$tweets_end}");
+			
+			$feed_whole_string = "";
+
+			$i = 0;
+			foreach($tweets as $tweet) {
+				$tweet_text = $tweet['text'];
+				$tweet_location = $tweet['place']['full_name'];
+				$link_processed = "";
+				if(isset($tweet['retweeted_status'])) {
+					$first = current(explode(":", $tweet_text));
+					$whole_tweet = $first.": ";
+					$whole_tweet .= $tweet['retweeted_status']['text'];
+					$link_processed = process_links($whole_tweet);
 				}
-			}
-			else if($options['show_browser_time']) {
-				if(isset($timezone)) {
-					$timezone_cast = (float) $timezone;
-					$offset = $timezone_cast * 3600;
-					$offset = intval($offset);
-					$tweet_time = $tweet_time + $offset;
+				else {
+					$link_processed = process_links($tweet['text']);
 				}
+				$tweet_time = strtotime($tweet['created_at']);
+				if($options['show_local_time']) {
+					$offset = $tweet['user']['utc_offset'];
+					if(isset($offset)) {
+						$tweet_time = $tweet_time + $offset;
+					}
+				}
+				else if($options['show_browser_time']) {
+					if(isset($timezone)) {
+						$timezone_cast = (float) $timezone;
+						$offset = $timezone_cast * 3600;
+						$offset = intval($offset);
+						$tweet_time = $tweet_time + $offset;
+					}
+				}
+				$date = date($options['time_format'], $tweet_time);
+				if($options['show_relative_time']) {
+					$date = relativeTime($tweet_time);
+				}
+				
+				$tweet_id = $tweet['id_str'];
+				
+				$feed_string_tmp = str_replace("{\$tweet_text}", $link_processed, $feed_string);
+				$feed_string_tmp = str_replace("{\$tweet_time}", $date, $feed_string_tmp);
+				$feed_string_tmp = str_replace("{\$tweet_location}", $tweet_location, $feed_string_tmp);
+				$feed_string_tmp = str_replace("{\$retweet}", '<a href="http://twitter.com/intent/retweet?tweet_id='.$tweet_id.'" target="_blank">Retweet</a>', $feed_string_tmp);
+				$feed_string_tmp = str_replace("{\$reply}", '<a href="http://twitter.com/intent/tweet?in_reply_to='.$tweet_id.'" target="_blank">Reply</a>', $feed_string_tmp);
+				$feed_string_tmp = str_replace("{\$favorite}", '<a href="http://twitter.com/intent/favorite?tweet_id='.$tweet_id.'" target="_blank">Favorite</a>', $feed_string_tmp);
+				$feed_string_tmp = str_replace("{\$retweet_link}", "http://twitter.com/intent/retweet?tweet_id=".$tweet_id, $feed_string_tmp);
+				$feed_string_tmp = str_replace("{\$reply_link}", "http://twitter.com/intent/tweet?in_reply_to=".$tweet_id, $feed_string_tmp);
+				$feed_string_tmp = str_replace("{\$favorite_link}", "http://twitter.com/intent/favorite?tweet_id=".$tweet_id, $feed_string_tmp);
+				$feed_string_tmp = str_replace("{\$tweet_link}", "http://twitter.com/".$options['twitter_username']."/statuses/".$tweet_id, $feed_string_tmp);	
+
+				$feed_whole_string .= $feed_string_tmp;
+				if($i == $limit - 1) {
+					break;
+				}
+				$i = $i + 1;
 			}
-			$date = date($options['time_format'], $tweet_time);
-			if($options['show_relative_time']) {
-				$date = relativeTime($tweet_time);
+				
+			$feed_start = "{\$tweets_start}";
+			$feed_end = "{\$tweets_end}";
+			$start_pos = strrpos($custom_string, $feed_start);
+			$end_pos = strrpos($custom_string, $feed_end) + strlen($feed_end);
+			$tag_length = $end_pos - $start_pos + 1;
+
+			$feed_string = substr_replace($custom_string, $feed_whole_string, $start_pos, $tag_length);
+			$feed_string = str_replace("{\$profile_image}", $image_url, $feed_string);
+			$feed_string = str_replace("{\$user_twitter_name}", $twitter_username, $feed_string);
+			$feed_string = str_replace("{\$user_real_name}", $twitter_username_real, $feed_string);
+			$feed_string = str_replace("{\$url}", $twitter_user_url, $feed_string);
+			$feed_string = str_replace("{\$user_description}", $twitter_user_description, $feed_string);
+			$feed_string = str_replace("{\$follower_count}", $twitter_follower_count, $feed_string);
+			$feed_string = str_replace("{\$friends_count}", $twitter_friends_count, $feed_string);
+			$feed_string = str_replace("{\$user_location}", $twitter_user_location, $feed_string);
+			$feed_string = str_replace("{\$tweet_location}", $tweet_location, $feed_string);
+
+			$result = $feed_string;
+
+			if(isset($tweets['errors'][0]['code'])) {
+				$result = $options['before_tweets_html'].'<p>The Twitter feed is currently unavailable or the username does not exist.</p>';
 			}
 			
-			$tweet_id = $tweet['id_str'];
-			
-			$feed_string_tmp = str_replace("{\$tweet_text}", $link_processed, $feed_string);
-			$feed_string_tmp = str_replace("{\$tweet_time}", $date, $feed_string_tmp);
-			$feed_string_tmp = str_replace("{\$tweet_location}", $tweet_location, $feed_string_tmp);
-			$feed_string_tmp = str_replace("{\$retweet}", '<a href="http://twitter.com/intent/retweet?tweet_id='.$tweet_id.'" target="_blank">Retweet</a>', $feed_string_tmp);
-			$feed_string_tmp = str_replace("{\$reply}", '<a href="http://twitter.com/intent/tweet?in_reply_to='.$tweet_id.'" target="_blank">Reply</a>', $feed_string_tmp);
-			$feed_string_tmp = str_replace("{\$favorite}", '<a href="http://twitter.com/intent/favorite?tweet_id='.$tweet_id.'" target="_blank">Favorite</a>', $feed_string_tmp);
-			$feed_string_tmp = str_replace("{\$retweet_link}", "http://twitter.com/intent/retweet?tweet_id=".$tweet_id, $feed_string_tmp);
-			$feed_string_tmp = str_replace("{\$reply_link}", "http://twitter.com/intent/tweet?in_reply_to=".$tweet_id, $feed_string_tmp);
-			$feed_string_tmp = str_replace("{\$favorite_link}", "http://twitter.com/intent/favorite?tweet_id=".$tweet_id, $feed_string_tmp);
-			$feed_string_tmp = str_replace("{\$tweet_link}", "http://twitter.com/".$options['twitter_username']."/statuses/".$tweet_id, $feed_string_tmp);	
-
-			$feed_whole_string .= $feed_string_tmp;
-			if($i == $limit - 1) {
-				break;
+			if($options['show_powered_by']) {
+				$result = $result.'<p>Powered by <a href="http://wpplugz.is-leet.com">wpPlugz</a></p>';
 			}
-			$i = $i + 1;
-		}
-			
-		$feed_start = "{\$tweets_start}";
-		$feed_end = "{\$tweets_end}";
-		$start_pos = strrpos($custom_string, $feed_start);
-		$end_pos = strrpos($custom_string, $feed_end) + strlen($feed_end);
-		$tag_length = $end_pos - $start_pos + 1;
-
-		$feed_string = substr_replace($custom_string, $feed_whole_string, $start_pos, $tag_length);
-		$feed_string = str_replace("{\$profile_image}", $image_url, $feed_string);
-		$feed_string = str_replace("{\$user_twitter_name}", $twitter_username, $feed_string);
-		$feed_string = str_replace("{\$user_real_name}", $twitter_username_real, $feed_string);
-		$feed_string = str_replace("{\$url}", $twitter_user_url, $feed_string);
-		$feed_string = str_replace("{\$user_description}", $twitter_user_description, $feed_string);
-		$feed_string = str_replace("{\$follower_count}", $twitter_follower_count, $feed_string);
-		$feed_string = str_replace("{\$friends_count}", $twitter_friends_count, $feed_string);
-		$feed_string = str_replace("{\$user_location}", $twitter_user_location, $feed_string);
-		$feed_string = str_replace("{\$tweet_location}", $tweet_location, $feed_string);
-
-		$result = $feed_string;
-
-		if(isset($tweets['errors'][0]['code'])) {
-			$result = $options['before_tweets_html'].'<p>The Twitter feed is currently unavailable or the username does not exist.</p>';
-		}
 		
-		if($options['show_powered_by']) {
-			$result = $result.'<p>Powered by <a href="http://wpplugz.is-leet.com">wpPlugz</a></p>';
+		}
+
+		if(!isset($tweets)) {
+			$result = "Something went very wrong or Twitters APIs are down.";
 		}
 		
 		echo $result;
@@ -406,14 +422,14 @@
 	function twitget_header_timezone() {
 	
 		$options = get_option('twitget_settings');
-	
-		$timezone = $_SESSION['timezone'];
+		
+		$timezone = (isset($_SESSION['timezone'])) ? $_SESSION['timezone'] : NULL;
 		
 		// Yes I know this can be done in JQuery, but with all the hasle if another plugin is using
 		// another version of JQuery or somebody include the JQuery lib without using enqueue
 		// this is just safer :)
 		
-		if($options['show_browser_time']) {
+		if($options['show_browser_time'] && isset($timezone)) {
 	
 ?>
 
