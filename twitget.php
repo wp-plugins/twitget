@@ -41,12 +41,13 @@
 		'show_avatar' => true,
 		'time_format' => 'D jS M y H:i',
 		'show_powered_by' => false,
-		'version' => '2.11',
+		'version' => '2.12',
 		'consumer_key' => '',
 		'consumer_secret' => '',
 		'user_token' => '',
 		'user_secret' => '',
 		'mode' => 0,
+		'links_new_window' => false,
 		'cookie_expiration' => 24,
 		'use_cookie' => false,
 		'show_local_time' => true,
@@ -182,11 +183,18 @@
 
 	}
  
-	function process_links($text) {
+	function process_links($text, $new) {
 
-		$text = preg_replace('@(https?://([-\w\.]+)+(d+)?(/([\w/_\.]*(\?\S+)?)?)?)@', '<a href="$1">$1</a>',  $text);
-		$text = preg_replace('/@(\w+)/', '<a href="http://twitter.com/$1">@$1</a>', $text);
-		$text = preg_replace('/\s#(\w+)/', ' <a href="http://search.twitter.com/search?q=%23$1">#$1</a>', $text);
+		if($new) {
+			$text = preg_replace('@(https?://([-\w\.]+)+(d+)?(/([\w/_\.]*(\?\S+)?)?)?)@', '<a href="$1" target="_blank">$1</a>',  $text);
+			$text = preg_replace('/@(\w+)/', '<a href="http://twitter.com/$1" target="_blank">@$1</a>', $text);
+			$text = preg_replace('/\s#(\w+)/', ' <a href="http://search.twitter.com/search?q=%23$1" target="_blank">#$1</a>', $text);
+		}
+		else {
+			$text = preg_replace('@(https?://([-\w\.]+)+(d+)?(/([\w/_\.]*(\?\S+)?)?)?)@', '<a href="$1">$1</a>',  $text);
+			$text = preg_replace('/@(\w+)/', '<a href="http://twitter.com/$1">@$1</a>', $text);
+			$text = preg_replace('/\s#(\w+)/', ' <a href="http://search.twitter.com/search?q=%23$1">#$1</a>', $text);		
+		}
 		return $text;
 
 	}
@@ -280,10 +288,10 @@
 					$first = current(explode(":", $tweet_text));
 					$whole_tweet = $first.": ";
 					$whole_tweet .= $tweet['retweeted_status']['text'];
-					$link_processed = process_links($whole_tweet);
+					$link_processed = process_links($whole_tweet, $options['links_new_window']);
 				}
 				else {
-					$link_processed = process_links($tweet['text']);
+					$link_processed = process_links($tweet['text'], $options['links_new_window']);
 				}
 				$tweet_time = strtotime($tweet['created_at']);
 				if($options['show_local_time']) {
@@ -492,6 +500,7 @@
 			$twitget_client_time = $_POST['twitget_client_time'];
 			$twitget_local_time = $_POST['twitget_show_local_time'];
 			$use_cookie = $_POST['twitget_timezone_cookie'];
+			$new_link = $_POST['twitget_links_new_window'];
 
 			$continue = true;
 			
@@ -520,6 +529,7 @@
 				$twitget_settings['cookie_expiration'] = intval($_POST['twitget_client_time_cookie']);
 				$twitget_settings['use_cookie'] = (isset($use_cookie)) ? true : false;
 				$twitget_settings['custom_string'] = stripslashes(html_entity_decode($_POST['twitget_custom_output']));
+				$twitget_settings['links_new_window'] = (isset($new_link)) ? true : false;
 				update_option('twitget_settings', $twitget_settings);
 				$message = "Settings updated.";
 			}
@@ -657,6 +667,14 @@
 		    	            <input type="checkbox" name="twitget_retweets" id="twitget_retweets" value="true" <?php if($twitget_options['show_retweets'] == true) { ?>checked="checked"<?php } ?> />
 							<br />
             				<span class="description">Check this if you want to include retweets in your feed.</span>
+						</td>
+					</tr>		
+					<tr>
+						<th scope="row"><label for="twitget_links_new_window">Open Twitter feed links in new window</label></th>
+						<td>
+		    	            <input type="checkbox" name="twitget_links_new_window" id="twitget_links_new_window" value="true" <?php if($twitget_options['links_new_window'] == true) { ?>checked="checked"<?php } ?> />
+							<br />
+            				<span class="description">Check this if you want URLs in Twitter feed to open in a new window.</span>
 						</td>
 					</tr>		
 					<tr>
