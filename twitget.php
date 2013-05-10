@@ -188,7 +188,7 @@
 		if($new) {
 			$text = preg_replace('@(https?://([-\w\.]+)+(d+)?(/([\w/_\.]*(\?\S+)?)?)?)@', '<a href="$1" target="_blank">$1</a>',  $text);
 			$text = preg_replace('/@(\w+)/', '<a href="http://twitter.com/$1" target="_blank">@$1</a>', $text);
-			$text = preg_replace('/\s#(\w+)/', ' <a href="http://search.twitter.com/search?q=%23$1" target="_blank">#$1</a>', $text);
+			$text = preg_replace('/\s#(\w+)/', ' <a href="http://twitter.com/search?q=%23$1" target="_blank">#$1</a>', $text);
 		}
 		else {
 			$text = preg_replace('@(https?://([-\w\.]+)+(d+)?(/([\w/_\.]*(\?\S+)?)?)?)@', '<a href="$1">$1</a>',  $text);
