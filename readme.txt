@@ -45,7 +45,7 @@ None at the moment.
 == Changelog ==
 
 = 2.1.4 =
-* [Fix] Fixed a small hash URL bug.
+* [Fix] Fixed a small hash URL bug (wouldn't work if links would open in new window).
 
 = 2.1.3 =
 * Replaced deprecated hashtag URL with new value.
