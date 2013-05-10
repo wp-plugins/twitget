@@ -4,7 +4,7 @@ Donate link: http://gum.co/twitget
 Tags: twitter widget, twitter, simple twitter widget, custom twitter, widget, tweet, twitter sidebar, twitter 1.1 api, feed
 Requires at least: 3.0
 Tested up to: 3.5
-Stable tag: 2.1.3
+Stable tag: 2.1.4
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -43,6 +43,9 @@ None at the moment.
 4. Available variables for custom HTML output and example
 
 == Changelog ==
+
+= 2.1.4 =
+* [Fix] Fixed a small hash URL bug.
 
 = 2.1.3 =
 * Replaced deprecated hashtag URL with new value.
