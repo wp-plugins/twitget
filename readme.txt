@@ -4,7 +4,7 @@ Donate link: http://gum.co/twitget
 Tags: twitter widget, twitter, simple twitter widget, custom twitter, widget, tweet, twitter sidebar, twitter 1.1 api, feed
 Requires at least: 3.0
 Tested up to: 3.5
-Stable tag: 2.1.4
+Stable tag: 2.2.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -43,6 +43,13 @@ None at the moment.
 4. Available variables for custom HTML output and example
 
 == Changelog ==
+
+= 2.2.1 =
+* [Fix] Fixed a jQuery bug (wouldn't load dates if client timezone was selected).
+
+= 2.2 =
+* [New] Changed client timezone tweets setting, everything is done on client side now
+* [Fix] Fixed a bug that caused settings to be unsaved.
 
 = 2.1.4 =
 * [Fix] Fixed a small hash URL bug (wouldn't work if links would open in new window).
