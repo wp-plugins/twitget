@@ -45,8 +45,8 @@ None at the moment.
 == Changelog ==
 
 = 2.2 =
-[New] Changed client timezone tweets setting, everything is done on client side now
-[Fix] Fixed a bug that caused settings to be unsaved.
+* [New] Changed client timezone tweets setting, everything is done on client side now
+* [Fix] Fixed a bug that caused settings to be unsaved.
 
 = 2.1.4 =
 * [Fix] Fixed a small hash URL bug (wouldn't work if links would open in new window).
