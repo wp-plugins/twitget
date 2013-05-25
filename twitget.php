@@ -3,7 +3,7 @@
 		Plugin Name: Twitget
 		Plugin URI: http://wpplugz.is-leet.com
 		Description: A simple widget that shows your recent tweets with fully customizable HTML output, hashtag support and more.
-		Version: 2.2
+		Version: 2.2.1
 		Author: Bostjan Cigan
 		Author URI: http://bostjan.gets-it.net
 		License: GPL v2
@@ -25,6 +25,8 @@
 	add_action('widgets_init', create_function('', 'return register_widget("simple_tweet_widget");')); // Register the widget
 	add_shortcode('twitget', 'twitget_shortcode_handler');
 	add_action('wp_head', 'twitget_js_include');
+	wp_register_script('jquery', 'http://ajax.googleapis.com/ajax/libs/jquery/2.0.0/jquery.min.js');
+	wp_enqueue_script('jquery');
 	
 	global $twitget_plugin_install_options;
 	$twitget_plugin_install_options = array(
