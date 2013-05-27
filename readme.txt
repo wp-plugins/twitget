@@ -45,7 +45,7 @@ None at the moment.
 == Changelog ==
 
 = 2.2.2 =
-* [Fix] Fixed another jQuery bug (now checking if jQuery is already included so there are now clashes).
+* [Fix] Fixed another jQuery bug (now checking if jQuery is already included so there are no clashes).
 
 = 2.2.1 =
 * [Fix] Fixed a jQuery bug (wouldn't load dates if client timezone was selected).
