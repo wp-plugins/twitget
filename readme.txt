@@ -20,9 +20,10 @@ What this plugin offers:
 * Customize number of shown tweets
 * Customize if you want to show retweets or replies
 * Show profile box
-* Customize entire HTML output
+* Customize entire HTML output (and use custom variables to customize your feed output)
 * Twitter API 1.1 support
-* Show Twitter times in clients browser timezone
+* Show Twitter times in clients timezone
+* Support for over 30 languages (date output)
 
 == Installation ==
 
@@ -166,7 +167,7 @@ Once inside a loop, you can use any of the following variables:
 {$favorite_link} - returns URL of favorite link
 {$tweet_link} - returns URL of tweet`
 
-Outside a loop you can use the following:
+Outside a loop or inside a loop you can use the following:
 
 `{$profile_image} - the url to the profile image of the user
 {$user_real_name} - the real name of the user
@@ -175,7 +176,11 @@ Outside a loop you can use the following:
 {$user_description} - description of the user
 {$user_location} - user location
 {$follower_count} - number of followers
-{$friends_count} - number of friends`
+{$friends_count} - number of friends
+{$profile_image_normal_url} - return URL of tweet profile image - 48x48 px size (if retweet in loop, returns original tweet profile image)
+{$profile_image_bigger_url} - return URL of tweet profile image - 73x73 px size (if retweet in loop, returns original tweet profile image)
+{$profile_image_mini_url} - return URL of tweet profile image - 24x24px size (if retweet in loop, returns original tweet profile image)
+{$profile_image_original_url} - return URL of tweet profile image - original size (if retweet in loop, returns original tweet profile image)`
 
 For example if you want to output Twitter text, a retweet link, a custom favorite link and some data behind the feed, you would do the following:
 
