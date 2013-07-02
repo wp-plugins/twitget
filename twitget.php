@@ -3,12 +3,12 @@
 		Plugin Name: Twitget
 		Plugin URI: http://wpplugz.is-leet.com
 		Description: A simple widget that shows your recent tweets with fully customizable HTML output, hashtag support and more.
-		Version: 2.2.2
+		Version: 3.0
 		Author: Bostjan Cigan
 		Author URI: http://bostjan.gets-it.net
 		License: GPL v2
 	*/ 
-
+	
 	// Wordpress formalities here ...
 	
 	// Lets register things
@@ -18,6 +18,9 @@
 	if(!class_exists('tmhUtilities')) {
 		require 'lib/tmhUtilities.php';
 	}
+	if(!class_exists('TwitterAPIExchange')) {
+		require 'lib/TwitterAPIExchange.php';
+	}
 	
 	register_activation_hook(__FILE__, 'twitget_install');
 	register_deactivation_hook(__FILE__, 'twitget_uninstall');
@@ -25,11 +28,8 @@
 	add_action('widgets_init', create_function('', 'return register_widget("simple_tweet_widget");')); // Register the widget
 	add_shortcode('twitget', 'twitget_shortcode_handler');
 	add_action('wp_head', 'twitget_js_include');
-	if(!wp_script_is('jquery')) {
-		wp_register_script('jquery', 'http://ajax.googleapis.com/ajax/libs/jquery/2.0.0/jquery.min.js');
-		wp_enqueue_script('jquery');
-	}
-
+	add_action('init', 'twitget_jquery_include');
+	
 	global $twitget_plugin_install_options;
 	$twitget_plugin_install_options = array(
 		'twitter_username' => '',
@@ -40,17 +40,19 @@
 		'show_avatar' => true,
 		'time_format' => 'D jS M y H:i',
 		'show_powered_by' => false,
-		'version' => '2.22',
+		'language' => 'en',
+		'version' => '3.0',
 		'consumer_key' => '',
 		'consumer_secret' => '',
 		'user_token' => '',
 		'user_secret' => '',
-		'mode' => 0,
+		'twitter_api' => 0, // 0 is Matt Harris's lib, 1 is James Mallisons lib
 		'links_new_window' => false,
-		'show_local_time' => true,
 		'show_retweets' => false,
 		'exclude_replies' => false,
-		'show_browser_time' => false,
+		'show_relative_time' => false,
+		'truncate_tweet' => false,
+		'truncate_tweet_size' => 100,
 		'custom_string' => '<img class="alignleft" src="{$profile_image}">
 <a href="https://www.twitter.com/{$user_twitter_name}">@{$user_twitter_name}</a>
 <br />
@@ -61,6 +63,85 @@
 {$tweets_end}
 </ul>'
 
+	);
+	
+	global $twitget_language_array;
+	$twitget_language_array = array(
+			"Arabic" => "ar",
+			"Arabic (Moroccan)" => "ar-ma",
+			"Bahasa (Indonesia)" => "id",
+			"Bahasa (Malaysia)" => "ms-my",
+			"Basque" => "eu",
+			"Bulgarian" => "bg",
+			"Catalan" => "ca",
+			"Chuvash" => "cv",
+			"Chinese" => "zh-cn",
+			"Chinese (Traditional)" => "zh-tw",
+			"Czech" => "cs",
+			"Danish" => "da",
+			"Dutch" => "nl",
+			"German" => "de",
+			"English" => "en",
+			"English (Canadian)" => "en-ca",
+			"English (UK)" => "en-gb",
+			"Esperanto" => "eo",
+			"Spanish" => "es",
+			"Finnish" => "fi",
+			"French" => "fr",
+			"French (Canadian)" => "fr-ca",
+			"Galician" => "gl",
+			"Hebrew" => "he",
+			"Hungarian" => "hu",
+			"Icelandic" => "is",
+			"Italian" => "it",
+			"Japanese" => "ja",
+			"Korean" => "ko",
+			"Latvian" => "lv",
+			"Nepalese" => "ar",
+			"Norwegian" => "ar",
+			"Polish" => "pl",
+			"Portugese" => "pt",
+			"Portugese (Brazil)" => "pt-br",
+			"Russian" => "ru",
+			"Slovenian" => "sl",
+			"Swedish" => "sv",
+			"Thai" => "th",
+			"Turkish" => "tr",
+			"Tamaziyt" => "tzm-la",
+			"Ukranian" => "uk"
+	);
+	
+	// The array for converting PHP formatted date to moment.js date
+	global $twitget_time_array;
+	$twitget_time_array = array(
+		"d" => "MM", // 01 - 31 day of the month
+		"D" => "ddd", // Mon through Sun
+		"j" => "M", // 1 to 31 day of the month without zeroes
+		"l" => "dddd", // Sunday through Saturday
+		"N" => "D", // 1 - 7 (day)
+		"S" => "Do", // st, nd, rd, th - Because PHP supports suffix for only day of month (j)
+		"w" => "d", // 0 - 6 day of week
+		"z" => "DDD", // 0 - 365 day of year
+		"W" => "wo", // 42nd week of year
+		"F" => "MMMM", // January through December
+		"m" => "MM", // 01 - 12
+		"M" => "MMM", // Jan through Dec
+		"n" => "M", // 1 - 12
+		"t" => "", // 28 - 31 (number of days in month)
+		"L" => "", // 1 if leap year, 0 otherwise
+		"o" => "YYYY", // 1999 or 2003
+		"Y" => "YYYY", // 1999 or 2003
+		"y" => "YY", // 99 or 03
+		"a" => "a", // am or pm
+		"A" => "A", // AM or PM
+		"B" => "", // 000 to 999 swatch
+		"g" => "h", // 1 through 12
+		"G" => "H", // 0 through 23
+		"h" => "hh", // 01 to 12
+		"H" => "HH", // 00 to 23
+		"i" => "mm", // 00 to 59 minutes
+		"s" => "ss", // 00 to 59 seconds
+		"u" => ""  // microseconds
 	);
 	
 	// Get current options
@@ -78,15 +159,20 @@
 		add_option('twitget_settings', $twitget_plugin_install_options);
 	}
 	
+	function twitget_jquery_include() {
+		if(!wp_script_is('jquery')) {
+			wp_register_script('jquery', 'http://ajax.googleapis.com/ajax/libs/jquery/2.0.0/jquery.min.js');
+			wp_enqueue_script('jquery');
+		}	
+	}
+
 	function twitget_js_include() {
-		$include = "<script type='text/javascript' src='";
-		$include .= plugin_dir_url(__FILE__).'js/strftime.js';
-		$include .= "'></script>";
-		$include2 = "<script type='text/javascript' src='";
-		$include2 .= plugin_dir_url(__FILE__).'js/moment.js';
-		$include2 .= "'></script>";
-		echo $include;
-		echo $include2;
+		$moment_js = plugin_dir_url(__FILE__).'js/moment.js';
+		$lang_js = plugin_dir_url(__FILE__).'js/langs.min.js';
+		wp_register_script('moment.js', $moment_js);
+		wp_enqueue_script('moment.js');
+		wp_register_script('langs.js', $lang_js);
+		wp_enqueue_script('langs.js');
 	}
 
 	
@@ -95,14 +181,20 @@
 		global $twitget_plugin_install_options;
 		$plugin_options_settings = get_option('twitget_settings');		
 		
-		// Legacy purposes only, before 2.0, delete these variables from options
+		// Legacy purposes only, before 3.0, delete these variables from options
 		$html_output = array(
 			'after_image_html',
 			'before_tweets_html',
 			'tweet_start_html',
 			'tweet_middle_html',
 			'tweet_end_html',
-			'after_tweets_html'
+			'after_tweets_html',
+			'mode',
+			'use_custom',
+			'use_cookie',
+			'cookie_expiration',
+			'show_browser_time',
+			'show_local_time'
 		);
 		
 		if((float) $plugin_options_settings['version'] < (float) $twitget_plugin_install_options['version']) {
@@ -112,9 +204,6 @@
 			foreach($html_output as $key) { // Legacy purposes only, before 2.0, delete variables from options
 				unset($plugin_options_settings[$key]);
 			}
-			unset($plugin_options_settings['use_custom']);
-			unset($plugin_options_settings['use_cookie']);
-			unset($plugin_options_settings['cookie_expiration']);
 			$plugin_options_settings['version'] = $twitget_plugin_install_options['version'];
 			update_option('twitget_settings', $plugin_options_settings);
 		}
@@ -131,69 +220,84 @@
 
 	// Shortcode function
 	function twitget_shortcode_handler($attributes, $content = null) {
-		return show_recent_tweets();
+		ob_start();
+		show_recent_tweets();
+		return ob_get_clean();
 	}
 
-	function twitter_status_11() {
+	function twitter_status() {
 	
 		$options = get_option('twitget_settings');
 
-		$tmhOAuth = new tmhOAuth(
-									array(
-										'consumer_key' => $options['consumer_key'],
-										'consumer_secret' => $options['consumer_secret'],
-										'user_token' => $options['user_token'],
-										'user_secret' => $options['user_secret'],
-										'curl_ssl_verifypeer' => false 
-									)
-								);
- 
-		$request_array = array();
-		$request_array['screen_name'] = $options['twitter_username'];
-		$request_array['include_rts'] = $options['show_retweets'];
-		$request_array['exclude_replies'] = $options['exclude_replies'];
- 
-		$code = $tmhOAuth->request('GET', $tmhOAuth->url('1.1/statuses/user_timeline'), $request_array);
- 
-		$response = $tmhOAuth->response['response'];
-		$tweets = json_decode($response, true);
-		
-		if(is_array($tweets)) {
-			$options['twitter_data'] = (array) $tweets;
+		if($options['twitter_api'] == 0) {
+			
+			$tmhOAuth = new tmhOAuth(
+										array(
+											'consumer_key' => $options['consumer_key'],
+											'consumer_secret' => $options['consumer_secret'],
+											'user_token' => $options['user_token'],
+											'user_secret' => $options['user_secret'],
+											'curl_ssl_verifypeer' => false
+										)
+									);
+	 
+			$request_array = array();
+			$request_array['screen_name'] = $options['twitter_username'];
+			$request_array['include_rts'] = $options['show_retweets'];
+			$request_array['exclude_replies'] = $options['exclude_replies'];
+	 
+			$code = $tmhOAuth->request('GET', $tmhOAuth->url('1.1/statuses/user_timeline'), $request_array);
+	 
+			$response = $tmhOAuth->response['response'];
+			
+			$tweets = json_decode($response, true);
+			
+			if(is_array($tweets)) {
+				$options['twitter_data'] = (array) $tweets;
+			}
+			else {
+				$options['twitter_data'] = NULL;
+			}
+			
 		}
 		else {
-			$options['twitter_data'] = NULL;
+		
+			$twitter = new TwitterAPIExchange(
+										array(
+											'oauth_access_token' => $options['user_token'],
+											'oauth_access_token_secret' => $options['user_secret'],
+											'consumer_key' => $options['consumer_key'],
+											'consumer_secret' => $options['consumer_secret']
+										)
+									);
+									
+			$url = 'https://api.twitter.com/1.1/statuses/user_timeline.json';
+			$getfield = '?screen_name='.$options['twitter_username'];
+			
+			if($options['show_retweets']) {
+				$getfield .= '&include_rts=true';
+			}
+			if(!$options['exclude_replies']) {
+				$getfield .= '&exclude_replies=true';
+			}
+			
+			$requestMethod = 'GET';
+			$response = $twitter->setGetfield($getfield)->buildOauth($url, $requestMethod)->performRequest();
+			$tweets = json_decode($response, true);
+
+			if(is_array($tweets)) {
+				$options['twitter_data'] = (array) $tweets;
+			}
+			else {
+				$options['twitter_data'] = NULL;
+			}
+			
 		}
 
 		update_option('twitget_settings', $options);
 	
 	}
 	
-	function twitter_status() {  
-
-		$options = get_option('twitget_settings');
-		$twitter_id = $options['twitter_username'];
-		$number_limit = $options['number_of_tweets'];
-		$curl = curl_init();
-		$url = "http://api.twitter.com/1/statuses/user_timeline/{$twitter_id}.json?count={$number_limit}";
-		if($options['show_retweets']) {
-			$url = $url.'&include_rts=1';
-		}
-		if(!$options['exclude_replies']) {
-			$url = $url.'&exclude_replies=1';
-		}
-		
-		curl_setopt($curl, CURLOPT_URL, $url);
-		curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-		$tweets = json_decode(curl_exec($curl), true);
-		curl_close($curl);
-		
-		$options['twitter_data'] = $tweets;			
-
-		update_option('twitget_settings', $options);
-
-	}
- 
 	function process_links($text, $new) {
 
 		if($new) {
@@ -225,15 +329,14 @@
 			update_option('twitget_settings', $options);
 		}
 		
+		unset($options);
+		$options = get_option('twitget_settings');
+
 		if($get_data) {
-			if($options['mode'] == 0) {
-				twitter_status();
-			}
-			else {
-				twitter_status_11();			
-			}
+			twitter_status();
 		}
 		
+		unset($options);
 		$options = get_option('twitget_settings');
 		$tweets = $options['twitter_data'];
 		
@@ -248,7 +351,7 @@
 			$twitter_user_description = $tweets[0]['user']['description']; // {$user_description}
 			$twitter_follower_count = $tweets[0]['user']['followers_count']; // {$follower_count}
 			$twitter_friends_count = $tweets[0]['user']['friends_count']; // {$friends_count}
-			$twitter_user_location = $tweets[0]['user']['location']; // {$user_location}		
+			$twitter_user_location = $tweets[0]['user']['location']; // {$user_location}
 
 			$result = "";
 
@@ -272,30 +375,17 @@
 				else {
 					$link_processed = process_links($tweet['text'], $options['links_new_window']);
 				}
-				$tweet_time = strtotime($tweet['created_at']);
-				if($options['show_local_time']) {
-					$offset = $tweet['user']['utc_offset'];
-					if(isset($offset)) {
-						$tweet_time = $tweet_time + $offset;
-					}
-				}
-				if($options['show_browser_time']) {
-					$tweet_date_array[$i] = strtotime($tweet['created_at']);
-				}
-				$date = date($options['time_format'], $tweet_time);
-				if($options['show_relative_time']) {
-					$date = relativeTime($tweet_time);
-				}
+
+				$tweet_date_array[$i] = strtotime($tweet['created_at']);
 				
 				$tweet_id = $tweet['id_str'];
 				
+				if($options["truncate_tweet"]) {
+					$link_processed = twitget_truncate_tweet($link_processed, $options["truncate_tweet_size"], "...", true, true);
+				}
+				
 				$feed_string_tmp = str_replace("{\$tweet_text}", $link_processed, $feed_string);
-				if($options["show_browser_time"]) {
-					$feed_string_tmp = str_replace("{\$tweet_time}", '<span class="'.$i.'_tweet_date"></span>', $feed_string_tmp);				
-				}
-				else {
-					$feed_string_tmp = str_replace("{\$tweet_time}", $date, $feed_string_tmp);
-				}
+				$feed_string_tmp = str_replace("{\$tweet_time}", '<span class="'.$i.'_tweet_date"></span>', $feed_string_tmp);				
 				$feed_string_tmp = str_replace("{\$tweet_location}", $tweet_location, $feed_string_tmp);
 				$feed_string_tmp = str_replace("{\$retweet}", '<a href="http://twitter.com/intent/retweet?tweet_id='.$tweet_id.'" target="_blank">Retweet</a>', $feed_string_tmp);
 				$feed_string_tmp = str_replace("{\$reply}", '<a href="http://twitter.com/intent/tweet?in_reply_to='.$tweet_id.'" target="_blank">Reply</a>', $feed_string_tmp);
@@ -304,6 +394,27 @@
 				$feed_string_tmp = str_replace("{\$reply_link}", "http://twitter.com/intent/tweet?in_reply_to=".$tweet_id, $feed_string_tmp);
 				$feed_string_tmp = str_replace("{\$favorite_link}", "http://twitter.com/intent/favorite?tweet_id=".$tweet_id, $feed_string_tmp);
 				$feed_string_tmp = str_replace("{\$tweet_link}", "http://twitter.com/".$options['twitter_username']."/statuses/".$tweet_id, $feed_string_tmp);	
+
+				if(isset($tweet['retweeted_status'])) {
+					$profile_url = $tweet["retweeted_status"]["user"]["profile_image_url"]; // 48x48 px
+					$profile_73_url = str_replace("_normal", "_bigger", $profile_url); // 73x73 px
+					$profile_24_url = str_replace("_normal", "_mini", $profile_url); // 24x24 px
+					$profile_original_url = str_replace("_normal", "", $profile_url); // Original size
+					$feed_string_tmp = str_replace("{\$profile_image_normal_url}", $profile_url, $feed_string_tmp);
+					$feed_string_tmp = str_replace("{\$profile_image_bigger_url}", $profile_73_url, $feed_string_tmp);
+					$feed_string_tmp = str_replace("{\$profile_image_mini_url}", $profile_24_url, $feed_string_tmp);
+					$feed_string_tmp = str_replace("{\$profile_image_original_url}", $profile_original_url, $feed_string_tmp);
+				}
+				else {
+					$profile_url = $tweet['user']['profile_image_url']; // 48x48 px
+					$profile_73_url = str_replace("_normal", "_bigger", $profile_url); // 73x73 px
+					$profile_24_url = str_replace("_normal", "_mini", $profile_url); // 24x24 px
+					$profile_original_url = str_replace("_normal", "", $profile_url); // Original size
+					$feed_string_tmp = str_replace("{\$profile_image_normal_url}", $profile_url, $feed_string_tmp);
+					$feed_string_tmp = str_replace("{\$profile_image_bigger_url}", $profile_73_url, $feed_string_tmp);
+					$feed_string_tmp = str_replace("{\$profile_image_mini_url}", $profile_24_url, $feed_string_tmp);
+					$feed_string_tmp = str_replace("{\$profile_image_original_url}", $profile_original_url, $feed_string_tmp);
+				}
 
 				$feed_whole_string .= $feed_string_tmp;
 				if($i == $limit - 1) {
@@ -329,6 +440,15 @@
 			$feed_string = str_replace("{\$user_location}", $twitter_user_location, $feed_string);
 			$feed_string = str_replace("{\$tweet_location}", $tweet_location, $feed_string);
 
+			$profile_url = $image_url;
+			$profile_73_url = str_replace("_normal", "_bigger", $profile_url); // 73x73 px
+			$profile_24_url = str_replace("_normal", "_mini", $profile_url); // 24x24 px
+			$profile_original_url = str_replace("_normal", "", $profile_url); // Original size
+			$feed_string = str_replace("{\$profile_image_normal_url}", $profile_url, $feed_string);
+			$feed_string = str_replace("{\$profile_image_bigger_url}", $profile_73_url, $feed_string);
+			$feed_string = str_replace("{\$profile_image_mini_url}", $profile_24_url, $feed_string);
+			$feed_string = str_replace("{\$profile_image_original_url}", $profile_original_url, $feed_string);
+
 			$result = $feed_string;
 
 			if(isset($tweets['errors'][0]['code'])) {
@@ -346,19 +466,32 @@
 		}
 
 		echo $result;
-
-		if($options["show_browser_time"]) {
+		
+		$time_format = $options['time_format'];
+		$moment_js_time = twitget_convert_from_php_to_momentjs($time_format);
+		
 		
 ?>
 
 		<script type="text/javascript">
 			jQuery(document).ready(function() { 
+				<?php if(strlen($options['language']) > 0) {
+				?>
+					moment.lang('<?php echo $options['language']; ?>');
+				<?php
+					}
+					else {
+				?>
+					moment.lang('en');
+				<?php
+					}
+				?>
 				<?php foreach($tweet_date_array as $c => $val) { ?>
 				var date_val_<?php echo $c; ?> = <?php echo $val; ?>;
 				<?php if($options["show_relative_time"]) { ?>
 				var date_<?php echo $c; ?> = moment.unix(date_val_<?php echo $c; ?>).fromNow();
 				<?php } else { ?>
-				var date_<?php echo $c; ?> = date("<?php echo $options['time_format']; ?>", date_val_<?php echo $c; ?>);				
+				var date_<?php echo $c; ?> = moment.unix(date_val_<?php echo $c; ?>).format("<?php echo $moment_js_time; ?>");
 				<?php } ?>
 				jQuery(".<?php echo $c; ?>_tweet_date").html(date_<?php echo $c; ?>);
 				<?php } ?>
@@ -367,10 +500,50 @@
 
 <?php
 
-		}
-
 	}
 
+	/**
+	 *
+	 * Converts PHP time format to moment.js time format
+	 * @parameters String PHP date format
+	 *
+	*/
+	function twitget_convert_from_php_to_momentjs($date_format) {
+	
+		global $twitget_time_array;
+		$time_exploded = explode(" ", $date_format);
+		$time_string = "";
+		foreach($time_exploded as $time_token) {
+			if(strlen($time_token) == 1) {
+				if(array_key_exists($time_token, $twitget_time_array)) {
+					$time_string .= $twitget_time_array[$time_token];
+				}
+				else {
+					$time_string .= $time_token;
+				}
+			}
+			else {
+				if($time_token == "jS") {
+					$time_string .= $twitget_time_array["S"]." ";
+				}
+				else {
+					for($i=0; $i<strlen($time_token); $i++) {
+						if(array_key_exists($time_token[$i], $twitget_time_array)) {
+							$time_string .= $twitget_time_array[$time_token[$i]];
+						}
+						else {
+							$time_string .= $time_token[$i];
+						}
+					}
+				}
+			}
+			$time_string .= " ";
+		}
+		
+		return $time_string;
+	
+	}
+	
 	// Get substring between two strings
 	function twitget_get_substring($string, $start, $end) {
 
@@ -384,50 +557,109 @@
 		return $unit;
 	}
 
-	function relativeTime($date) {
-
-		$now = time();
-		$diff = $now - $date;
-
-		if ($diff < 60) {
-			return sprintf($diff > 1 ? '%s seconds ago' : 'A second ago', $diff);
+	/**
+	 * Truncates text.
+	 *
+	 * Cuts a string to the length of $length and replaces the last characters
+	 * with the ending if the text is longer than length.
+	 *
+	 * @param string  $text String to truncate.
+	 * @param integer $length Length of returned string, including ellipsis.
+	 * @param string  $ending Ending to be appended to the trimmed string.
+	 * @param boolean $exact If false, $text will not be cut mid-word
+	 * @param boolean $considerHtml If true, HTML tags would be handled correctly
+	 * @return string Trimmed string.
+	 */
+	function twitget_truncate_tweet($text, $length, $ending, $exact, $considerHtml) {
+		if ($considerHtml) {
+			// if the plain text is shorter than the maximum length, return the whole text
+			if (strlen(preg_replace('/<.*?>/', '', $text)) <= $length) {
+				return $text;
+			}
+			// splits all html-tags to scanable lines
+			preg_match_all('/(<.+?>)?([^<>]*)/s', $text, $lines, PREG_SET_ORDER);
+			$total_length = strlen($ending);
+			$open_tags = array();
+			$truncate = '';
+			foreach ($lines as $line_matchings) {
+				// if there is any html-tag in this line, handle it and add it (uncounted) to the output
+				if (!empty($line_matchings[1])) {
+					// if it's an "empty element" with or without xhtml-conform closing slash (f.e. <br/>)
+					if (preg_match('/^<(\s*.+?\/\s*|\s*(img|br|input|hr|area|base|basefont|col|frame|isindex|link|meta|param)(\s.+?)?)>$/is', $line_matchings[1])) {
+						// do nothing
+					// if tag is a closing tag (f.e. </b>)
+					} else if (preg_match('/^<\s*\/([^\s]+?)\s*>$/s', $line_matchings[1], $tag_matchings)) {
+						// delete tag from $open_tags list
+						$pos = array_search($tag_matchings[1], $open_tags);
+						if ($pos !== false) {
+							unset($open_tags[$pos]);
+						}
+					// if tag is an opening tag (f.e. <b>)
+					} else if (preg_match('/^<\s*([^\s>!]+).*?>$/s', $line_matchings[1], $tag_matchings)) {
+						// add tag to the beginning of $open_tags list
+						array_unshift($open_tags, strtolower($tag_matchings[1]));
+					}
+					// add html-tag to $truncate'd text
+					$truncate .= $line_matchings[1];
+				}
+				// calculate the length of the plain text part of the line; handle entities as one character
+				$content_length = strlen(preg_replace('/&[0-9a-z]{2,8};|&#[0-9]{1,7};|[0-9a-f]{1,6};/i', ' ', $line_matchings[2]));
+				if ($total_length+$content_length> $length) {
+					// the number of characters which are left
+					$left = $length - $total_length;
+					$entities_length = 0;
+					// search for html entities
+					if (preg_match_all('/&[0-9a-z]{2,8};|&#[0-9]{1,7};|[0-9a-f]{1,6};/i', $line_matchings[2], $entities, PREG_OFFSET_CAPTURE)) {
+						// calculate the real length of all entities in the legal range
+						foreach ($entities[0] as $entity) {
+							if ($entity[1]+1-$entities_length <= $left) {
+								$left--;
+								$entities_length += strlen($entity[0]);
+							} else {
+								// no more characters left
+								break;
+							}
+						}
+					}
+					$truncate .= substr($line_matchings[2], 0, $left+$entities_length);
+					// maximum lenght is reached, so get off the loop
+					break;
+				} else {
+					$truncate .= $line_matchings[2];
+					$total_length += $content_length;
+				}
+				// if the maximum length is reached, get off the loop
+				if($total_length>= $length) {
+					break;
+				}
+			}
+		} else {
+			if (strlen($text) <= $length) {
+				return $text;
+			} else {
+				$truncate = substr($text, 0, $length - strlen($ending));
+			}
 		}
-
-		$diff = floor($diff/60);
-
-		if ($diff < 60) {
-			return sprintf($diff > 1 ? '%s minutes ago' : 'One minute ago', $diff);
+		// if the words shouldn't be cut in the middle...
+		if (!$exact) {
+			// ...search the last occurance of a space...
+			$spacepos = strrpos($truncate, ' ');
+			if (isset($spacepos)) {
+				// ...and cut the text in this position
+				$truncate = substr($truncate, 0, $spacepos);
+			}
 		}
-
-		$diff = floor($diff/60);
-
-		if ($diff < 24) {
-			return sprintf($diff > 1 ? '%s hours ago' : 'An hour ago', $diff);
+		// add the defined ending to the text
+		$truncate .= $ending;
+		if($considerHtml) {
+			// close all unclosed html-tags
+			foreach ($open_tags as $tag) {
+				$truncate .= '</' . $tag . '>';
+			}
 		}
-
-		$diff = floor($diff/24);
-
-		if ($diff < 7) {
-			return sprintf($diff > 1 ? '%s days ago' : 'Yesterday', $diff);
-		}
-
-		if ($diff < 30) {
-			$diff = floor($diff / 7);
-			return sprintf($diff > 1 ? '%s weeks ago' : 'One week ago', $diff);
-		}
-
-		$diff = floor($diff/30);
-
-		if ($diff < 12) {
-			return sprintf($diff > 1 ? '%s months ago' : 'Last month', $diff);
-		}
-
-		$diff = date('Y', $now) - date('Y', $date);
-
-		return sprintf($diff > 1 ? '%s years ago' : 'Last year', $diff);
-
+		return $truncate;
 	}
-
+	
 	function twitget_settings() {
 	
 		$twitget_settings = get_option('twitget_settings');
@@ -440,48 +672,37 @@
 			$twitget_exclude = $_POST['twitget_exclude_replies'];
 			$twitget_relative = $_POST['twitget_relative_time'];
 			$twitget_custom = $_POST['twitget_use_custom'];
-			$twitget_client_time = $_POST['twitget_client_time'];
-			$twitget_local_time = $_POST['twitget_show_local_time'];
-			$use_cookie = $_POST['twitget_timezone_cookie'];
 			$new_link = $_POST['twitget_links_new_window'];
 
-			$continue = true;
-			
-			if(isset($twitget_client_time) && isset($twitget_local_time)) {
-				$message = "You can not set the times in local times and browsers times at the same time. Please select only one option.";
-				$continue = false;
-			}
-			
-			if($continue) {
-				$twitget_settings['twitter_username'] = stripslashes($_POST['twitget_username']);
-				$twitget_settings['time_limit'] = (int) $_POST['twitget_refresh'];
-				$twitget_settings['number_of_tweets'] = (int) $_POST['twitget_number'];
-				$twitget_settings['time_format'] = stripslashes($_POST['twitget_time']);
-				$twitget_settings['show_powered_by'] = (isset($show_powered)) ? true : false;
-				$twitget_settings['consumer_key'] = stripslashes($_POST['twitget_consumer_key']);
-				$twitget_settings['consumer_secret'] = stripslashes($_POST['twitget_consumer_secret']);
-				$twitget_settings['user_token'] = stripslashes($_POST['twitget_user_token']);
-				$twitget_settings['user_secret'] = stripslashes($_POST['twitget_user_secret']);
-				$twitget_settings['mode'] = (int) ($_POST['twitget_api']);
-				$twitget_settings['show_retweets'] = (isset($show_retweets)) ? true : false;
-				$twitget_settings['exclude_replies'] = (isset($twitget_exclude)) ? true : false;
-				$twitget_settings['show_local_time'] = (isset($twitget_local_time)) ? true : false;
-				$twitget_settings['show_browser_time'] = (isset($twitget_client_time)) ? true : false;
-				$twitget_settings['show_relative_time'] = (isset($twitget_relative)) ? true : false;
-				$twitget_settings['use_custom'] = (isset($twitget_custom)) ? true : false;
-				$twitget_settings['cookie_expiration'] = intval($_POST['twitget_client_time_cookie']);
-				$twitget_settings['use_cookie'] = (isset($use_cookie)) ? true : false;
-				$twitget_settings['custom_string'] = stripslashes(html_entity_decode($_POST['twitget_custom_output']));
-				$twitget_settings['links_new_window'] = (isset($new_link)) ? true : false;
-				update_option('twitget_settings', $twitget_settings);
-				$message = "Settings updated.";
-			}
+			$twitget_settings['twitter_username'] = stripslashes($_POST['twitget_username']);
+			$twitget_settings['time_limit'] = (int) $_POST['twitget_refresh'];
+			$twitget_settings['number_of_tweets'] = (int) $_POST['twitget_number'];
+			$twitget_settings['time_format'] = stripslashes($_POST['twitget_time']);
+			$twitget_settings['show_powered_by'] = (isset($show_powered)) ? true : false;
+			$twitget_settings['consumer_key'] = stripslashes($_POST['twitget_consumer_key']);
+			$twitget_settings['consumer_secret'] = stripslashes($_POST['twitget_consumer_secret']);
+			$twitget_settings['user_token'] = stripslashes($_POST['twitget_user_token']);
+			$twitget_settings['user_secret'] = stripslashes($_POST['twitget_user_secret']);
+			$twitget_settings['twitter_api'] = (int) ($_POST['twitget_api']);
+			$twitget_settings['show_retweets'] = (isset($show_retweets)) ? true : false;
+			$twitget_settings['exclude_replies'] = (isset($twitget_exclude)) ? true : false;
+			$twitget_settings['show_relative_time'] = (isset($twitget_relative)) ? true : false;
+			$twitget_settings['custom_string'] = stripslashes(html_entity_decode($_POST['twitget_custom_output']));
+			$twitget_settings['links_new_window'] = (isset($new_link)) ? true : false;
+			$twitget_settings['language'] = $_POST['twitget_time_language'];
+			$twitget_settings['truncate_tweet'] = (isset($_POST['truncate_tweet'])) ? true : false;
+			$twitget_settings['truncate_tweet_size'] = intval($_POST['truncate_tweet_size']);
+			$message = "Settings updated.";
+
+			update_option('twitget_settings', $twitget_settings);
 			
 			unset($twitget_settings);
 			
 		}
 
 		$twitget_options = get_option('twitget_settings');
+		
+		$twitget_options["time_format"];
 		
 ?>
 
@@ -502,21 +723,6 @@
 
 ?>
         
-			<script type="text/javascript">
-				// You can not select local and browser time at the same time, so exclude these two choices
-				function set_local_time() {
-					var browser_time = document.getElementById("twitget_client_time").checked;
-					if(browser_time) {
-						document.getElementById("twitget_client_time").checked = false;
-					}
-				}
-				function set_browser_time() {
-					var local_time = document.getElementById("twitget_show_local_time").checked;
-					if(local_time) {
-						document.getElementById("twitget_show_local_time").checked = false;
-					}
-				}
-			</script>
                 <form method="post" action="">
 				<table class="form-table">
 					<tr>
@@ -524,7 +730,7 @@
 						<td>
 							<p>Thank you for using this plugin. If you like the plugin, you can <a href="http://gum.co/twitget" target="_blank">buy me a cup of coffee</a> :)</p> 
 							<p>Visit the official website @ <a href="http://wpplugz.is-leet.com">wpPlugz</a>.</p>
-							<p>This plugin uses the <a href="https://github.com/themattharris/tmhOAuth">tmhOAuth</a> library by Matt Harris.</p>
+							<p>This plugin uses the <a href="https://github.com/themattharris/tmhOAuth">tmhOAuth</a> library by Matt Harris, <a href="http://momentjs.com/">moment.js</a> by Tim Wood and <a href="https://github.com/J7mbo/twitter-api-php">TwitterAPIExchange</a> by James Mallison.</p>
                         </td>
 					</tr>		
 					<tr>
@@ -536,19 +742,18 @@
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><label for="twitget_api">Twitter API</label></th>
+						<th scope="row"><label for="twitget_api">Twitter Library</label></th>
 						<td>
 							<select name="twitget_api" id="twitget_api">
-								<option value="0" <?php if($twitget_options['mode'] == 0) { ?> selected="selected" <?php } ?>>API 1.0</option>
-								<option value="1" <?php if($twitget_options['mode'] == 1) { ?> selected="selected" <?php } ?>>API 1.1</option>
+								<option value="0" <?php if($twitget_options['twitter_api'] == 0) { ?> selected="selected" <?php } ?>>tmhOAuth</option>
+								<option value="1" <?php if($twitget_options['twitter_api'] == 1) { ?> selected="selected" <?php } ?>>Twitter-API-PHP</option>
 							</select>
 							<br />
-            				<span class="description">Set the API you will be using, note that API 1.0 expires on March 2013. To use API 1.1, create a Twitter aplication on the <a href="https://dev.twitter.com/apps/new" target="_blank">
-							Twitter's developer page</a>. If you're lost, check <a href="http://youtu.be/noB3P-K-wb4" target="_blank">this tutorial</a> on Youtube.</span>
+            				<span class="description">Set the library you will be using. tmhOAuth is the default library.</span>
 						</td>
 					</tr>
 					<tr>
-						<th scope="row"><label for="twitget_data">Twitter API 1.1 data</label></th>
+						<th scope="row"><label for="twitget_data">Twitter API data</label></th>
 						<td>
 							<table class="form-table">
 							<tr>
@@ -580,7 +785,7 @@
 								</td>
 							</tr>							
 							</table>
-							<span class="description">If you're using API 1.1, enter your keys here.</span>							
+							<span class="description">Enter your API keys here. If you don't know how do to that, follow this <a href="http://www.youtube.com/watch?v=noB3P-K-wb4" target="_blank">video tutorial</a>.</span>							
 						</td>
 					</tr>
 					<tr>
@@ -608,6 +813,28 @@
 						</td>
 					</tr>
 					<tr>
+						<th scope="row"><label for="twitget_time_language">Time format language</label></th>
+						<td>
+							<select name="twitget_time_language" id="twitget_time_language">
+								<option value="-1">--- Select time language ---</option>
+								<?php
+									global $twitget_language_array;
+									foreach($twitget_language_array as $lang => $short) {
+									
+								?>
+										<option value="<?php echo $short; ?>" <?php if($short == $twitget_options['language']) { ?> selected="selected" <?php } ?>><?php echo $lang; ?></option>
+								
+								<?php
+								
+									}
+								
+								?>
+							</select>
+							<br />
+            				<span class="description">The language of the time format.</span>
+						</td>
+					</tr>
+					<tr>
 						<th scope="row"><label for="twitget_retweets">Show retweets</label></th>
 						<td>
 		    	            <input type="checkbox" name="twitget_retweets" id="twitget_retweets" value="true" <?php if($twitget_options['show_retweets'] == true) { ?>checked="checked"<?php } ?> />
@@ -622,22 +849,6 @@
 							<br />
             				<span class="description">Check this if you want URLs in Twitter feed to open in a new window.</span>
 						</td>
-					</tr>		
-					<tr>
-						<th scope="row"><label for="twitget_show_local_time">Show local time</label></th>
-						<td>
-		    	            <input type="checkbox" name="twitget_show_local_time" id="twitget_show_local_time" onchange="set_local_time();" value="true" <?php if($twitget_options['show_local_time'] == true) { ?>checked="checked"<?php } ?> />
-							<br />
-            				<span class="description">Check this if you want to output tweets times in your local time (will only work if you've set a timezone in your Twitter account settings).</span>
-						</td>
-					</tr>		
-					<tr>
-						<th scope="row"><label for="twitget_client_time">Show client time</label></th>
-						<td>
-		    	            <input type="checkbox" name="twitget_client_time" id="twitget_client_time" value="true" onchange="set_browser_time();" <?php if($twitget_options['show_browser_time'] == true) { ?>checked="checked"<?php } ?> />
-							<br />
-            				<span class="description">Check this if you want the Tweets to be shown in clients timezone times. This option only works if the user who is viewing the page has Javascript enabled.</span>
-						</td>
 					</tr>
 					<tr>
 						<th scope="row"><label for="twitget_exclude_replies">Exclude replies</label></th>
@@ -645,6 +856,22 @@
 		    	            <input type="checkbox" name="twitget_exclude_replies" id="twitget_exclude_replies" value="true" <?php if($twitget_options['exclude_replies'] == true) { ?>checked="checked"<?php } ?> />
 							<br />
             				<span class="description">Check this if you want to exclude replies in your feed.</span>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row"><label for="truncate_tweet">Truncate Tweets</label></th>
+						<td>
+		    	            <input type="checkbox" name="truncate_tweet" id="truncate_tweet" value="true" <?php if($twitget_options['truncate_tweet'] == true) { ?>checked="checked"<?php } ?> />
+							<br />
+            				<span class="description">Check this if you want to truncate the size of tweets (set number of characters below).</span>
+						</td>
+					</tr>		
+					<tr>
+						<th scope="row"><label for="truncate_tweet_size">Truncate Tweet size</label></th>
+						<td>
+							<input type="text" name="truncate_tweet_size" id="truncate_tweet_size" value="<?php echo esc_html($twitget_options['truncate_tweet_size']); ?>" />
+							<br />
+            				<span class="description">Limit the number of outputted characters of a tweet.</span>
 						</td>
 					</tr>
 					<tr>
@@ -686,7 +913,7 @@
 							{$retweet_link} - returns URL of retweet link<br />
 							{$reply_link} - returns URL of reply link<br />
 							{$favorite_link} - returns URL of favorite link<br />
-							{$tweet_link} - returns URL of tweet<br /><br />
+							{$tweet_link} - returns URL of tweet<br />
 							<strong><p>Used outside or inside of loop</p></strong>
 							{$profile_image} - the url to the profile image of the user<br />
 							{$user_real_name} - the real name of the user<br />
@@ -696,6 +923,10 @@
 							{$user_location} - user location<br />
 							{$follower_count} - number of followers<br />
 							{$friends_count} - number of friends<br />
+							{$profile_image_normal_url} - return URL of tweet profile image - 48x48 px size (if retweet in loop, returns original tweet profile image)<br />
+							{$profile_image_bigger_url} - return URL of tweet profile image - 73x73 px size (if retweet in loop, returns original tweet profile image)<br />
+							{$profile_image_mini_url} - return URL of tweet profile image - 24x24px size (if retweet in loop, returns original tweet profile image)<br />
+							{$profile_image_original_url} - return URL of tweet profile image - original size (if retweet in loop, returns original tweet profile image)<br /><br />
 							</span>
 						</td>
 					</tr>		

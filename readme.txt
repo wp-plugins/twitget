@@ -44,6 +44,20 @@ None at the moment.
 
 == Changelog ==
 
+= 3.0 =
+* [New] Added option to truncate tweets in output
+* [New] Added option to show retweet profile image of original tweet
+* [New] Added new variables for bigger profile images
+* [New] Added language support
+* [New] Added the option to choose which PHP API to use for Twitter API calls
+* [Fix] Fixed a settings bug
+* [Fix] Fixed shortcode, now returns instead of echoes value
+* [Fix] Fixed script including
+* Deprecated the 1.0 API option, as it is also officially deprecated
+* Deprecated browser cookie for timezone
+* Deprecated local time variable
+* Tweet times are now defaultly shown in clients time with JQuery
+
 = 2.2.2 =
 * [Fix] Fixed another jQuery bug (now checking if jQuery is already included so there are no clashes).
 
