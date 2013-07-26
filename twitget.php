@@ -3,7 +3,7 @@
 		Plugin Name: Twitget
 		Plugin URI: http://wpplugz.is-leet.com
 		Description: A simple widget that shows your recent tweets with fully customizable HTML output, hashtag support and more.
-		Version: 3.0
+		Version: 3.1
 		Author: Bostjan Cigan
 		Author URI: http://bostjan.gets-it.net
 		License: GPL v2
@@ -41,7 +41,7 @@
 		'time_format' => 'D jS M y H:i',
 		'show_powered_by' => false,
 		'language' => 'en',
-		'version' => '3.0',
+		'version' => '3.1',
 		'consumer_key' => '',
 		'consumer_secret' => '',
 		'user_token' => '',
@@ -114,9 +114,9 @@
 	// The array for converting PHP formatted date to moment.js date
 	global $twitget_time_array;
 	$twitget_time_array = array(
-		"d" => "MM", // 01 - 31 day of the month
+		"d" => "DD", // 01 - 31 day of the month
 		"D" => "ddd", // Mon through Sun
-		"j" => "M", // 1 to 31 day of the month without zeroes
+		"j" => "D", // 1 to 31 day of the month without zeroes
 		"l" => "dddd", // Sunday through Saturday
 		"N" => "D", // 1 - 7 (day)
 		"S" => "Do", // st, nd, rd, th - Because PHP supports suffix for only day of month (j)
@@ -179,7 +179,7 @@
 	function twitget_update() {
 		
 		global $twitget_plugin_install_options;
-		$plugin_options_settings = get_option('twitget_settings');		
+		$plugin_options_settings = get_option('twitget_settings');
 		
 		// Legacy purposes only, before 3.0, delete these variables from options
 		$html_output = array(
@@ -196,7 +196,7 @@
 			'show_browser_time',
 			'show_local_time'
 		);
-		
+
 		if((float) $plugin_options_settings['version'] < (float) $twitget_plugin_install_options['version']) {
 			foreach($twitget_plugin_install_options as $key => $value) {
 				$plugin_options_settings[$key] = (isset($plugin_options_settings[$key]) && strcmp($key, "version") != 0) ? $plugin_options_settings[$key] : $value;
@@ -250,14 +250,7 @@
 	 
 			$response = $tmhOAuth->response['response'];
 			
-			$tweets = json_decode($response, true);
-			
-			if(is_array($tweets)) {
-				$options['twitter_data'] = (array) $tweets;
-			}
-			else {
-				$options['twitter_data'] = NULL;
-			}
+			$options['twitter_data'] = $response;
 			
 		}
 		else {
@@ -283,14 +276,8 @@
 			
 			$requestMethod = 'GET';
 			$response = $twitter->setGetfield($getfield)->buildOauth($url, $requestMethod)->performRequest();
-			$tweets = json_decode($response, true);
 
-			if(is_array($tweets)) {
-				$options['twitter_data'] = (array) $tweets;
-			}
-			else {
-				$options['twitter_data'] = NULL;
-			}
+			$options['twitter_data'] = $response;
 			
 		}
 
@@ -338,7 +325,13 @@
 		
 		unset($options);
 		$options = get_option('twitget_settings');
-		$tweets = $options['twitter_data'];
+		
+		if(!is_array($options["twitter_data"])) {
+			$tweets = json_decode($options['twitter_data'], true);
+		}
+		else {
+			$tweets = $options['twitter_data'];	
+		}
 		
 		if(is_array($tweets) && isset($tweets) && isset($tweets[0]['user'])) {
 
