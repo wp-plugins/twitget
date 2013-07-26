@@ -46,7 +46,7 @@ None at the moment.
 == Changelog ==
 
 = 3.1 =
-* [Fix] Fixed an encoding bug that caused settings to be wiped out if Twitter feed had "special characters".
+* [Fix] Fixed an encoding bug that caused settings to be wiped out if Twitter feed had "special characters"
 
 = 3.0 =
 * [New] Added option to truncate tweets in output
