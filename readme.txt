@@ -45,6 +45,9 @@ None at the moment.
 
 == Changelog ==
 
+= 3.1 =
+* [Fix] Fixed an encoding bug that caused settings to be wiped out if Twitter feed had "special characters".
+
 = 3.0 =
 * [New] Added option to truncate tweets in output
 * [New] Added option to show retweet profile image of original tweet
@@ -201,6 +204,16 @@ The author of this plugin is Bostjan Cigan, visit the [homepage](http://bostjan.
 == Homepage ==
 
 Visit the [homepage](http://wpplugz.is-leet.com "homepage of twitget") of the plugin.
+
+== Thank you ==
+
+A big thank you goes to all the people that take the time to post a support thread on the forum. It helps this plugin to stay alive and work as
+it should.
+
+I would also like to thank to the following Wordpress forum members that have helped me found and eradicated some nasty bugs:
+
+* [Scuddr](http://wordpress.org/support/profile/scuddr "Scuddr")
+* [2unco](http://wordpress.org/support/profile/2unco "2unco")
 
 == Donators ==
 
