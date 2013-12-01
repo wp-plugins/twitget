@@ -3,7 +3,7 @@
 		Plugin Name: Twitget
 		Plugin URI: http://wpplugz.is-leet.com
 		Description: A simple widget that shows your recent tweets with fully customizable HTML output, hashtag support and more.
-		Version: 3.1
+		Version: 3.2
 		Author: Bostjan Cigan
 		Author URI: http://bostjan.gets-it.net
 		License: GPL v2
@@ -41,7 +41,7 @@
 		'time_format' => 'D jS M y H:i',
 		'show_powered_by' => false,
 		'language' => 'en',
-		'version' => '3.1',
+		'version' => '3.2',
 		'consumer_key' => '',
 		'consumer_secret' => '',
 		'user_token' => '',
@@ -98,7 +98,8 @@
 			"Korean" => "ko",
 			"Latvian" => "lv",
 			"Nepalese" => "ar",
-			"Norwegian" => "ar",
+			"Norwegian (nynorsk)" => "nn",
+			"Norwegian (bokmål)" => "nb",
 			"Polish" => "pl",
 			"Portugese" => "pt",
 			"Portugese (Brazil)" => "pt-br",

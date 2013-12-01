@@ -45,6 +45,10 @@ None at the moment.
 
 == Changelog ==
 
+= 3.2 =
+* [Fix] Language fix for Norwegian
+* [New] Added Finnish language.
+
 = 3.1 =
 * [Fix] Fixed an encoding bug that caused settings to be wiped out if Twitter feed had "special characters"
 
