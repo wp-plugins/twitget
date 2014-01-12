@@ -3,7 +3,7 @@
 		Plugin Name: Twitget
 		Plugin URI: http://wpplugz.is-leet.com
 		Description: A simple widget that shows your recent tweets with fully customizable HTML output, hashtag support and more.
-		Version: 3.3
+		Version: 3.3.1
 		Author: Bostjan Cigan
 		Author URI: http://bostjan.gets-it.net
 		License: GPL v2
@@ -41,7 +41,7 @@
 		'time_format' => 'D jS M y H:i',
 		'show_powered_by' => false,
 		'language' => 'en',
-		'version' => '3.3',
+		'version' => '3.31',
 		'consumer_key' => '',
 		'consumer_secret' => '',
 		'user_token' => '',
@@ -331,11 +331,11 @@
 			$get_data = true;
 		}
 		
-		//if(time() - $options['last_access'] > $options['time_limit'] * 60) {
+		if(time() - $options['last_access'] > $options['time_limit'] * 60) {
 			$get_data = true;
-		//	$options['last_access'] = time();
-		//	update_option('twitget_settings', $options);
-		//}
+			$options['last_access'] = time();
+			update_option('twitget_settings', $options);
+		}
 		
 		unset($options);
 		$options = get_option('twitget_settings');
