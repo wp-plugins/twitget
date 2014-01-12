@@ -500,7 +500,7 @@
 				<?php
 					}
 				?>
-				<?php foreach($tweet_date_array as $c => $val) { ?>
+				<?php if(!empty($tweet_date_array)) { foreach($tweet_date_array as $c => $val) { ?>
 				var date_val_<?php echo $c; ?> = <?php echo $val; ?>;
 				<?php if($options["show_relative_time"]) { ?>
 				var date_<?php echo $c; ?> = moment.unix(date_val_<?php echo $c; ?>).fromNow();
@@ -508,7 +508,7 @@
 				var date_<?php echo $c; ?> = moment.unix(date_val_<?php echo $c; ?>).format("<?php echo $moment_js_time; ?>");
 				<?php } ?>
 				jQuery(".<?php echo $c; ?>_tweet_date").html(date_<?php echo $c; ?>);
-				<?php } ?>
+				<?php } } ?>
 			});
 		</script>
 
