@@ -46,7 +46,7 @@ None at the moment.
 == Changelog ==
 
 = 3.3 =
-* [New] Added option to show original URLs instead of shortned ones
+* [New] Added option to show original URLs instead of shortened ones
 * [Fix] Fixed invalid parsing of some URLs in tweets
 * [Fix] Fixed warning in date array
 * Updated to latest tmhOAuth lib.
