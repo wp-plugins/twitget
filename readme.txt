@@ -3,8 +3,8 @@ Contributors: ZeroCool51
 Donate link: http://gum.co/twitget
 Tags: twitter widget, twitter, simple twitter widget, custom twitter, widget, tweet, twitter sidebar, twitter 1.1 api
 Requires at least: 3.0
-Tested up to: 3.5
-Stable tag: 3.0
+Tested up to: 3.8
+Stable tag: 3.3.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -45,8 +45,21 @@ None at the moment.
 
 == Changelog ==
 
+= 3.3.1 =
+* [Fix] Fixed a small feed time refresh bug.
+
+= 3.3 =
+* [New] Added option to show original URLs instead of shortened ones
+* [Fix] Fixed invalid parsing of some URLs in tweets
+* [Fix] Fixed warning in date array
+* Updated to latest tmhOAuth lib.
+
+= 3.2 =
+* [Fix] Language fix for Norwegian
+* [New] Added Finnish language.
+
 = 3.1 =
-* [Fix] Fixed an encoding bug that caused settings to be wiped out if Twitter feed had "special characters".
+* [Fix] Fixed an encoding bug that caused settings to be wiped out if Twitter feed had "special characters"
 
 = 3.0 =
 * [New] Added option to truncate tweets in output
