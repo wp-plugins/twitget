@@ -48,6 +48,7 @@ None at the moment.
 = 3.3 =
 * [New] Added option to show original URLs instead of shortned ones
 * [Fix] Fixed invalid parsing of some URLs in tweets
+* [Fix] Fixed warning in date array
 * Updated to latest tmhOAuth lib.
 
 = 3.2 =
