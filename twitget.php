@@ -3,7 +3,7 @@
 		Plugin Name: Twitget
 		Plugin URI: http://wpplugz.is-leet.com
 		Description: A simple widget that shows your recent tweets with fully customizable HTML output, hashtag support and more.
-		Version: 3.3.1
+		Version: 3.3.2
 		Author: Bostjan Cigan
 		Author URI: http://bostjan.gets-it.net
 		License: GPL v2
@@ -41,7 +41,7 @@
 		'time_format' => 'D jS M y H:i',
 		'show_powered_by' => false,
 		'language' => 'en',
-		'version' => '3.31',
+		'version' => '3.32',
 		'consumer_key' => '',
 		'consumer_secret' => '',
 		'user_token' => '',
@@ -289,24 +289,48 @@
 	
 	function process_links($text, $new, $full, $tweet) {
 
-		foreach($tweet["entities"]["urls"] as $key => $data) {
-			
-			if($full) {
-				if($new) {
-					$text = str_replace($data["url"], '<a href="'.$data["expanded_url"].'" target="_blank">'.$data["display_url"].'</a>', $text);
+		if(isset($tweet["entities"]["urls"])) {
+			foreach($tweet["entities"]["urls"] as $key => $data) {
+				
+				if($full) {
+					if($new) {
+						$text = str_replace($data["url"], '<a href="'.$data["expanded_url"].'" target="_blank">'.$data["display_url"].'</a>', $text);
+					}
+					else {
+						$text = str_replace($data["url"], '<a href="'.$data["expanded_url"].'">'.$data["display_url"].'</a>', $text);
+					}
 				}
 				else {
-					$text = str_replace($data["url"], '<a href="'.$data["expanded_url"].'">'.$data["display_url"].'</a>', $text);
+					if($new) {
+						$text = str_replace($data["url"], '<a href="'.$data["url"].'" target="_blank">'.$data["url"].'</a>', $text);
+					}
+					else {
+						$text = str_replace($data["url"], '<a href="'.$data["url"].'">'.$data["url"].'</a>', $text);
+					}				
 				}
-			}
-			else {
-				if($new) {
-					$text = str_replace($data["url"], '<a href="'.$data["url"].'" target="_blank">'.$data["url"].'</a>', $text);
+			}			
+		}
+
+		if(isset($tweet["entities"]["media"])) {
+			foreach($tweet["entities"]["media"] as $key => $data) {
+				
+				if($full) {
+					if($new) {
+						$text = str_replace($data["url"], '<a href="'.$data["expanded_url"].'" target="_blank">'.$data["display_url"].'</a>', $text);
+					}
+					else {
+						$text = str_replace($data["url"], '<a href="'.$data["expanded_url"].'">'.$data["display_url"].'</a>', $text);
+					}
 				}
 				else {
-					$text = str_replace($data["url"], '<a href="'.$data["url"].'">'.$data["url"].'</a>', $text);
-				}				
-			}
+					if($new) {
+						$text = str_replace($data["url"], '<a href="'.$data["url"].'" target="_blank">'.$data["url"].'</a>', $text);
+					}
+					else {
+						$text = str_replace($data["url"], '<a href="'.$data["url"].'">'.$data["url"].'</a>', $text);
+					}				
+				}
+			}			
 		}
 
 		if($new) {
@@ -679,15 +703,14 @@
 		$twitget_settings = get_option('twitget_settings');
 		$message = '';
 		
-		if(isset($_POST['twitget_username']) && is_array($twitget_settings) === true) {
+		if(isset($_POST['twitget_username']) && is_array($twitget_settings) === true && isset($twitget_settings) && $twitget_settings != null) {
 		
-			$show_powered = $_POST['twitget_show_powered'];
-			$show_retweets = $_POST['twitget_retweets'];
-			$twitget_exclude = $_POST['twitget_exclude_replies'];
-			$twitget_relative = $_POST['twitget_relative_time'];
-			$twitget_custom = $_POST['twitget_use_custom'];
-			$new_link = $_POST['twitget_links_new_window'];
-			$full_url = $_POST['twitget_links_full'];
+			$show_powered = isset($_POST['twitget_show_powered']) ? $_POST['twitget_show_powered'] : null;
+			$show_retweets = isset($_POST['twitget_retweets']) ? $_POST['twitget_retweets'] : null;
+			$twitget_exclude = isset($_POST['twitget_exclude_replies']) ? $_POST['twitget_exclude_replies'] : null;
+			$twitget_relative = isset($_POST['twitget_relative_time']) ? $_POST['twitget_relative_time'] : null;
+			$new_link = isset($_POST['twitget_links_new_window']) ? $_POST['twitget_links_new_window'] : null;
+			$full_url = isset($_POST['twitget_links_full']) ? $_POST['twitget_links_full'] : null;
 
 			$twitget_settings['twitter_username'] = stripslashes($_POST['twitget_username']);
 			$twitget_settings['time_limit'] = (int) $_POST['twitget_refresh'];
