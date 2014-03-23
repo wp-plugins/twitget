@@ -3,7 +3,7 @@
 		Plugin Name: Twitget
 		Plugin URI: http://wpplugz.is-leet.com
 		Description: A simple widget that shows your recent tweets with fully customizable HTML output, hashtag support and more.
-		Version: 3.1
+		Version: 3.3.2
 		Author: Bostjan Cigan
 		Author URI: http://bostjan.gets-it.net
 		License: GPL v2
@@ -41,7 +41,7 @@
 		'time_format' => 'D jS M y H:i',
 		'show_powered_by' => false,
 		'language' => 'en',
-		'version' => '3.1',
+		'version' => '3.32',
 		'consumer_key' => '',
 		'consumer_secret' => '',
 		'user_token' => '',
@@ -52,6 +52,7 @@
 		'exclude_replies' => false,
 		'show_relative_time' => false,
 		'truncate_tweet' => false,
+		'show_full_url' => false,
 		'truncate_tweet_size' => 100,
 		'custom_string' => '<img class="alignleft" src="{$profile_image}">
 <a href="https://www.twitter.com/{$user_twitter_name}">@{$user_twitter_name}</a>
@@ -98,7 +99,8 @@
 			"Korean" => "ko",
 			"Latvian" => "lv",
 			"Nepalese" => "ar",
-			"Norwegian" => "ar",
+			"Norwegian (nynorsk)" => "nn",
+			"Norwegian (bokmål)" => "nb",
 			"Polish" => "pl",
 			"Portugese" => "pt",
 			"Portugese (Brazil)" => "pt-br",
@@ -249,7 +251,7 @@
 			$code = $tmhOAuth->request('GET', $tmhOAuth->url('1.1/statuses/user_timeline'), $request_array);
 	 
 			$response = $tmhOAuth->response['response'];
-			
+
 			$options['twitter_data'] = $response;
 			
 		}
@@ -285,18 +287,61 @@
 	
 	}
 	
-	function process_links($text, $new) {
+	function process_links($text, $new, $full, $tweet) {
+
+		if(isset($tweet["entities"]["urls"])) {
+			foreach($tweet["entities"]["urls"] as $key => $data) {
+				
+				if($full) {
+					if($new) {
+						$text = str_replace($data["url"], '<a href="'.$data["expanded_url"].'" target="_blank">'.$data["display_url"].'</a>', $text);
+					}
+					else {
+						$text = str_replace($data["url"], '<a href="'.$data["expanded_url"].'">'.$data["display_url"].'</a>', $text);
+					}
+				}
+				else {
+					if($new) {
+						$text = str_replace($data["url"], '<a href="'.$data["url"].'" target="_blank">'.$data["url"].'</a>', $text);
+					}
+					else {
+						$text = str_replace($data["url"], '<a href="'.$data["url"].'">'.$data["url"].'</a>', $text);
+					}				
+				}
+			}			
+		}
+
+		if(isset($tweet["entities"]["media"])) {
+			foreach($tweet["entities"]["media"] as $key => $data) {
+				
+				if($full) {
+					if($new) {
+						$text = str_replace($data["url"], '<a href="'.$data["expanded_url"].'" target="_blank">'.$data["display_url"].'</a>', $text);
+					}
+					else {
+						$text = str_replace($data["url"], '<a href="'.$data["expanded_url"].'">'.$data["display_url"].'</a>', $text);
+					}
+				}
+				else {
+					if($new) {
+						$text = str_replace($data["url"], '<a href="'.$data["url"].'" target="_blank">'.$data["url"].'</a>', $text);
+					}
+					else {
+						$text = str_replace($data["url"], '<a href="'.$data["url"].'">'.$data["url"].'</a>', $text);
+					}				
+				}
+			}			
+		}
 
 		if($new) {
-			$text = preg_replace('@(https?://([-\w\.]+)+(d+)?(/([\w/_\.]*(\?\S+)?)?)?)@', '<a href="$1" target="_blank">$1</a>',  $text);
 			$text = preg_replace('/@(\w+)/', '<a href="http://twitter.com/$1" target="_blank">@$1</a>', $text);
 			$text = preg_replace('/\s#(\w+)/', ' <a href="http://twitter.com/search?q=%23$1" target="_blank">#$1</a>', $text);
 		}
 		else {
-			$text = preg_replace('@(https?://([-\w\.]+)+(d+)?(/([\w/_\.]*(\?\S+)?)?)?)@', '<a href="$1">$1</a>',  $text);
 			$text = preg_replace('/@(\w+)/', '<a href="http://twitter.com/$1">@$1</a>', $text);
 			$text = preg_replace('/\s#(\w+)/', ' <a href="http://twitter.com/search?q=%23$1">#$1</a>', $text);		
 		}
+
 		return $text;
 
 	}
@@ -363,10 +408,10 @@
 					$first = current(explode(":", $tweet_text));
 					$whole_tweet = $first.": ";
 					$whole_tweet .= $tweet['retweeted_status']['text'];
-					$link_processed = process_links($whole_tweet, $options['links_new_window']);
+					$link_processed = process_links($whole_tweet, $options['links_new_window'], $options['show_full_url'], $tweet);
 				}
 				else {
-					$link_processed = process_links($tweet['text'], $options['links_new_window']);
+					$link_processed = process_links($tweet['text'], $options['links_new_window'], $options['show_full_url'], $tweet);
 				}
 
 				$tweet_date_array[$i] = strtotime($tweet['created_at']);
@@ -479,7 +524,7 @@
 				<?php
 					}
 				?>
-				<?php foreach($tweet_date_array as $c => $val) { ?>
+				<?php if(!empty($tweet_date_array)) { foreach($tweet_date_array as $c => $val) { ?>
 				var date_val_<?php echo $c; ?> = <?php echo $val; ?>;
 				<?php if($options["show_relative_time"]) { ?>
 				var date_<?php echo $c; ?> = moment.unix(date_val_<?php echo $c; ?>).fromNow();
@@ -487,7 +532,7 @@
 				var date_<?php echo $c; ?> = moment.unix(date_val_<?php echo $c; ?>).format("<?php echo $moment_js_time; ?>");
 				<?php } ?>
 				jQuery(".<?php echo $c; ?>_tweet_date").html(date_<?php echo $c; ?>);
-				<?php } ?>
+				<?php } } ?>
 			});
 		</script>
 
@@ -658,14 +703,14 @@
 		$twitget_settings = get_option('twitget_settings');
 		$message = '';
 		
-		if(isset($_POST['twitget_username']) && is_array($twitget_settings) === true) {
+		if(isset($_POST['twitget_username']) && is_array($twitget_settings) === true && isset($twitget_settings) && $twitget_settings != null) {
 		
-			$show_powered = $_POST['twitget_show_powered'];
-			$show_retweets = $_POST['twitget_retweets'];
-			$twitget_exclude = $_POST['twitget_exclude_replies'];
-			$twitget_relative = $_POST['twitget_relative_time'];
-			$twitget_custom = $_POST['twitget_use_custom'];
-			$new_link = $_POST['twitget_links_new_window'];
+			$show_powered = isset($_POST['twitget_show_powered']) ? $_POST['twitget_show_powered'] : null;
+			$show_retweets = isset($_POST['twitget_retweets']) ? $_POST['twitget_retweets'] : null;
+			$twitget_exclude = isset($_POST['twitget_exclude_replies']) ? $_POST['twitget_exclude_replies'] : null;
+			$twitget_relative = isset($_POST['twitget_relative_time']) ? $_POST['twitget_relative_time'] : null;
+			$new_link = isset($_POST['twitget_links_new_window']) ? $_POST['twitget_links_new_window'] : null;
+			$full_url = isset($_POST['twitget_links_full']) ? $_POST['twitget_links_full'] : null;
 
 			$twitget_settings['twitter_username'] = stripslashes($_POST['twitget_username']);
 			$twitget_settings['time_limit'] = (int) $_POST['twitget_refresh'];
@@ -685,6 +730,7 @@
 			$twitget_settings['language'] = $_POST['twitget_time_language'];
 			$twitget_settings['truncate_tweet'] = (isset($_POST['truncate_tweet'])) ? true : false;
 			$twitget_settings['truncate_tweet_size'] = intval($_POST['truncate_tweet_size']);
+			$twitget_settings['show_full_url'] = (isset($full_url)) ? true : false;
 			$message = "Settings updated.";
 
 			update_option('twitget_settings', $twitget_settings);
@@ -834,7 +880,15 @@
 							<br />
             				<span class="description">Check this if you want to include retweets in your feed.</span>
 						</td>
-					</tr>		
+					</tr>	
+					<tr>
+						<th scope="row"><label for="twitget_links_full">Show full URLs</label></th>
+						<td>
+		    	            <input type="checkbox" name="twitget_links_full" id="twitget_links_full" value="true" <?php if($twitget_options['show_full_url'] == true) { ?>checked="checked"<?php } ?> />
+							<br />
+            				<span class="description">Check this if you want to show full URLs (not t.co).</span>
+						</td>
+					</tr>
 					<tr>
 						<th scope="row"><label for="twitget_links_new_window">Open Twitter feed links in new window</label></th>
 						<td>
