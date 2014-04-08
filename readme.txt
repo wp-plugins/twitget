@@ -3,8 +3,8 @@ Contributors: ZeroCool51
 Donate link: http://gum.co/twitget
 Tags: twitter widget, twitter, simple twitter widget, custom twitter, widget, tweet, twitter sidebar, twitter 1.1 api
 Requires at least: 3.0
-Tested up to: 3.8.1
-Stable tag: 3.3.2
+Tested up to: 3.8.2
+Stable tag: 3.3.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -44,6 +44,10 @@ None at the moment.
 4. Available variables for custom HTML output and example
 
 == Changelog ==
+
+= 3.3.3 =
+* [Fix] Fixed a small XSS security exploit (could only be done if a user had admin access to your blog).
+* [Fix] Added nonce checking for form validation.
 
 = 3.3.2 =
 * [Fix] Fixed URL parsing for media URLs.

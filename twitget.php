@@ -3,7 +3,7 @@
 		Plugin Name: Twitget
 		Plugin URI: http://wpplugz.is-leet.com
 		Description: A simple widget that shows your recent tweets with fully customizable HTML output, hashtag support and more.
-		Version: 3.3.2
+		Version: 3.3.3
 		Author: Bostjan Cigan
 		Author URI: http://bostjan.gets-it.net
 		License: GPL v2
@@ -41,7 +41,7 @@
 		'time_format' => 'D jS M y H:i',
 		'show_powered_by' => false,
 		'language' => 'en',
-		'version' => '3.32',
+		'version' => '3.33',
 		'consumer_key' => '',
 		'consumer_secret' => '',
 		'user_token' => '',
@@ -705,37 +705,44 @@
 		
 		if(isset($_POST['twitget_username']) && is_array($twitget_settings) === true && isset($twitget_settings) && $twitget_settings != null) {
 		
-			$show_powered = isset($_POST['twitget_show_powered']) ? $_POST['twitget_show_powered'] : null;
-			$show_retweets = isset($_POST['twitget_retweets']) ? $_POST['twitget_retweets'] : null;
-			$twitget_exclude = isset($_POST['twitget_exclude_replies']) ? $_POST['twitget_exclude_replies'] : null;
-			$twitget_relative = isset($_POST['twitget_relative_time']) ? $_POST['twitget_relative_time'] : null;
-			$new_link = isset($_POST['twitget_links_new_window']) ? $_POST['twitget_links_new_window'] : null;
-			$full_url = isset($_POST['twitget_links_full']) ? $_POST['twitget_links_full'] : null;
+			if(wp_verify_nonce($_POST['twitget_nonce'], 'twitget_nonce')) {
 
-			$twitget_settings['twitter_username'] = stripslashes($_POST['twitget_username']);
-			$twitget_settings['time_limit'] = (int) $_POST['twitget_refresh'];
-			$twitget_settings['number_of_tweets'] = (int) $_POST['twitget_number'];
-			$twitget_settings['time_format'] = stripslashes($_POST['twitget_time']);
-			$twitget_settings['show_powered_by'] = (isset($show_powered)) ? true : false;
-			$twitget_settings['consumer_key'] = stripslashes($_POST['twitget_consumer_key']);
-			$twitget_settings['consumer_secret'] = stripslashes($_POST['twitget_consumer_secret']);
-			$twitget_settings['user_token'] = stripslashes($_POST['twitget_user_token']);
-			$twitget_settings['user_secret'] = stripslashes($_POST['twitget_user_secret']);
-			$twitget_settings['twitter_api'] = (int) ($_POST['twitget_api']);
-			$twitget_settings['show_retweets'] = (isset($show_retweets)) ? true : false;
-			$twitget_settings['exclude_replies'] = (isset($twitget_exclude)) ? true : false;
-			$twitget_settings['show_relative_time'] = (isset($twitget_relative)) ? true : false;
-			$twitget_settings['custom_string'] = stripslashes(html_entity_decode($_POST['twitget_custom_output']));
-			$twitget_settings['links_new_window'] = (isset($new_link)) ? true : false;
-			$twitget_settings['language'] = $_POST['twitget_time_language'];
-			$twitget_settings['truncate_tweet'] = (isset($_POST['truncate_tweet'])) ? true : false;
-			$twitget_settings['truncate_tweet_size'] = intval($_POST['truncate_tweet_size']);
-			$twitget_settings['show_full_url'] = (isset($full_url)) ? true : false;
-			$message = "Settings updated.";
+				$show_powered = isset($_POST['twitget_show_powered']) ? $_POST['twitget_show_powered'] : null;
+				$show_retweets = isset($_POST['twitget_retweets']) ? $_POST['twitget_retweets'] : null;
+				$twitget_exclude = isset($_POST['twitget_exclude_replies']) ? $_POST['twitget_exclude_replies'] : null;
+				$twitget_relative = isset($_POST['twitget_relative_time']) ? $_POST['twitget_relative_time'] : null;
+				$new_link = isset($_POST['twitget_links_new_window']) ? $_POST['twitget_links_new_window'] : null;
+				$full_url = isset($_POST['twitget_links_full']) ? $_POST['twitget_links_full'] : null;
 
-			update_option('twitget_settings', $twitget_settings);
+				$twitget_settings['twitter_username'] = stripslashes($_POST['twitget_username']);
+				$twitget_settings['time_limit'] = (int) $_POST['twitget_refresh'];
+				$twitget_settings['number_of_tweets'] = (int) $_POST['twitget_number'];
+				$twitget_settings['time_format'] = stripslashes($_POST['twitget_time']);
+				$twitget_settings['show_powered_by'] = (isset($show_powered)) ? true : false;
+				$twitget_settings['consumer_key'] = stripslashes($_POST['twitget_consumer_key']);
+				$twitget_settings['consumer_secret'] = stripslashes($_POST['twitget_consumer_secret']);
+				$twitget_settings['user_token'] = stripslashes($_POST['twitget_user_token']);
+				$twitget_settings['user_secret'] = stripslashes($_POST['twitget_user_secret']);
+				$twitget_settings['twitter_api'] = (int) ($_POST['twitget_api']);
+				$twitget_settings['show_retweets'] = (isset($show_retweets)) ? true : false;
+				$twitget_settings['exclude_replies'] = (isset($twitget_exclude)) ? true : false;
+				$twitget_settings['show_relative_time'] = (isset($twitget_relative)) ? true : false;
+				$twitget_settings['custom_string'] = stripslashes(html_entity_decode($_POST['twitget_custom_output']));
+				$twitget_settings['links_new_window'] = (isset($new_link)) ? true : false;
+				$twitget_settings['language'] = $_POST['twitget_time_language'];
+				$twitget_settings['truncate_tweet'] = (isset($_POST['truncate_tweet'])) ? true : false;
+				$twitget_settings['truncate_tweet_size'] = intval($_POST['truncate_tweet_size']);
+				$twitget_settings['show_full_url'] = (isset($full_url)) ? true : false;
+				$message = "Settings updated.";
+
+				update_option('twitget_settings', $twitget_settings);
+				
+				unset($twitget_settings);
 			
-			unset($twitget_settings);
+			}
+			else {
+				$message = "Security check failed. You do not have permission to do this.";
+			}
 			
 		}
 
@@ -798,28 +805,28 @@
 							<tr>
 								<th scope="row"><label for="twitget_consumer_key">Consumer key</label></th>
 								<td>
-									<input type="text" name="twitget_consumer_key" id="twitget_consumer_key" size="70" value="<?php echo $twitget_options['consumer_key']; ?>" /><br />
+									<input type="text" name="twitget_consumer_key" id="twitget_consumer_key" size="70" value="<?php echo esc_attr($twitget_options['consumer_key']); ?>" /><br />
 									<span class="description">Enter your consumer key here.</span>
 								</td>
 							</tr>
 							<tr>
 								<th scope="row"><label for="twitget_consumer_secret">Consumer secret</label></th>
 								<td>
-									<input type="text" name="twitget_consumer_secret" id="twitget_consumer_secret" size="70" value="<?php echo $twitget_options['consumer_secret']; ?>" /><br />
+									<input type="text" name="twitget_consumer_secret" id="twitget_consumer_secret" size="70" value="<?php echo esc_attr($twitget_options['consumer_secret']); ?>" /><br />
 									<span class="description">Enter your consumer secret key here.</span>
 								</td>
 							</tr>
 							<tr>
 								<th scope="row"><label for="twitget_user_token">Access token</label></th>
 								<td>
-									<input type="text" name="twitget_user_token" id="twitget_user_token" size="70" value="<?php echo $twitget_options['user_token']; ?>" /><br />
+									<input type="text" name="twitget_user_token" id="twitget_user_token" size="70" value="<?php echo esc_attr($twitget_options['user_token']); ?>" /><br />
 									<span class="description">Enter your access token key here.</span>
 								</td>
 							</tr>
 							<tr>
 								<th scope="row"><label for="twitget_user_secret">Access token secret</label></th>
 								<td>
-									<input type="text" name="twitget_user_secret" id="twitget_user_secret" size="70" value="<?php echo $twitget_options['user_secret']; ?>" /><br />
+									<input type="text" name="twitget_user_secret" id="twitget_user_secret" size="70" value="<?php echo esc_attr($twitget_options['user_secret']); ?>" /><br />
 									<span class="description">Enter your access token secret key here.</span>
 								</td>
 							</tr>							
@@ -830,7 +837,7 @@
 					<tr>
 						<th scope="row"><label for="twitget_refresh">Twitter feed refresh (in minutes)</label></th>
 						<td>
-							<input type="text" name="twitget_refresh" id="twitget_refresh" value="<?php echo $twitget_options['time_limit']; ?>" />
+							<input type="text" name="twitget_refresh" id="twitget_refresh" value="<?php echo esc_attr($twitget_options['time_limit']); ?>" />
 							<br />
             				<span class="description">In how many minutes does the Twitter feed refresh.</span>
 						</td>
@@ -838,7 +845,7 @@
 					<tr>
 						<th scope="row"><label for="twitget_number">Number of tweets</label></th>
 						<td>
-							<input type="text" name="twitget_number" id="twitget_number" value="<?php echo $twitget_options['number_of_tweets']; ?>" />
+							<input type="text" name="twitget_number" id="twitget_number" value="<?php echo esc_attr($twitget_options['number_of_tweets']); ?>" />
 							<br />
             				<span class="description">How many tweets are shown.</span>
 						</td>
@@ -978,6 +985,8 @@
 						</td>
 					</tr>		
 				</table>
+				<?php $nonce = wp_create_nonce("twitget_nonce"); ?>
+				<input type="hidden" name="twitget_nonce" id="twitget_nonce" value="<?php echo $nonce; ?>">
 				<p><input type="submit" name="Submit" class="button-primary" value="<?php esc_attr_e('Update options') ?>" /></p>
 				</form>
 
