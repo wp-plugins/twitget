@@ -1,11 +1,11 @@
 <?php
 	/* 
 		Plugin Name: Twitget
-		Plugin URI: http://wpplugz.is-leet.com
+		Plugin URI: http://bostjan-cigan.com/plugins
 		Description: A simple widget that shows your recent tweets with fully customizable HTML output, hashtag support and more.
-		Version: 3.3.3
+		Version: 3.3.5
 		Author: Bostjan Cigan
-		Author URI: http://bostjan.gets-it.net
+		Author URI: http://bostjan-cigan.com
 		License: GPL v2
 	*/ 
 	
@@ -41,7 +41,7 @@
 		'time_format' => 'D jS M y H:i',
 		'show_powered_by' => false,
 		'language' => 'en',
-		'version' => '3.33',
+		'version' => '3.34',
 		'consumer_key' => '',
 		'consumer_secret' => '',
 		'user_token' => '',
@@ -941,7 +941,7 @@
 						<td>
 		    	            <input type="checkbox" name="twitget_show_powered" id="twitget_show_powered" value="true" <?php if($twitget_options['show_powered_by'] == true) { ?>checked="checked"<?php } ?> />
 							<br />
-            				<span class="description">Show powered by message, if you decide not to show it, please consider a <a href="http://gum.co/twitget" target="_blank">donation</a>.</span>
+            				<span class="description">Show powered by message, if you decide not to show it, please consider a <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=SKMW3BAC8KE52" target="_blank">donation</a>.</span>
 						</td>
 					</tr>		
 				</table>
@@ -1000,7 +1000,7 @@
 		
 		function simple_tweet_widget() {
 			$widget_ops = array('classname' => 'simple_tweet_widget', 'description' => 'Display your recent tweets.' );			
-			$this->WP_Widget('simple_tweet_widget', 'Twitget', $widget_ops);
+			parent::WP_Widget('simple_tweet_widget', 'Twitget', $widget_ops);
 		}
 		
 		function widget($args, $instance) {
