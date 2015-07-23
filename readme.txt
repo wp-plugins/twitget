@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_i
 Tags: twitter widget, twitter, simple twitter widget, custom twitter, widget, tweet, twitter sidebar, twitter 1.1 api
 Requires at least: 3.0
 Tested up to: 4.0
-Stable tag: 3.3.4
+Stable tag: 3.3.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -44,6 +44,9 @@ None at the moment.
 4. Available variables for custom HTML output and example
 
 == Changelog ==
+
+= 3.3.5 =
+* [Fix] Updated widget constructor call.
 
 = 3.3.4 =
 * [Fix] Small fix in time display.

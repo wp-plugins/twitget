@@ -1,11 +1,11 @@
 <?php
 	/* 
 		Plugin Name: Twitget
-		Plugin URI: http://bostjan.gets-it.net/plugins
+		Plugin URI: http://bostjan-cigan.com/plugins
 		Description: A simple widget that shows your recent tweets with fully customizable HTML output, hashtag support and more.
-		Version: 3.3.4
+		Version: 3.3.5
 		Author: Bostjan Cigan
-		Author URI: http://bostjan.gets-it.net
+		Author URI: http://bostjan-cigan.com
 		License: GPL v2
 	*/ 
 	
@@ -1000,7 +1000,7 @@
 		
 		function simple_tweet_widget() {
 			$widget_ops = array('classname' => 'simple_tweet_widget', 'description' => 'Display your recent tweets.' );			
-			$this->WP_Widget('simple_tweet_widget', 'Twitget', $widget_ops);
+			parent::WP_Widget('simple_tweet_widget', 'Twitget', $widget_ops);
 		}
 		
 		function widget($args, $instance) {
