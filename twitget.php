@@ -1,11 +1,11 @@
 <?php
 	/* 
 		Plugin Name: Twitget
-		Plugin URI: http://wpplugz.is-leet.com
+		Plugin URI: http://bostjan-cigan.com/plugins
 		Description: A simple widget that shows your recent tweets with fully customizable HTML output, hashtag support and more.
-		Version: 3.3.3
+		Version: 3.3.8
 		Author: Bostjan Cigan
-		Author URI: http://bostjan.gets-it.net
+		Author URI: http://bostjan-cigan.com
 		License: GPL v2
 	*/ 
 	
@@ -33,6 +33,7 @@
 	global $twitget_plugin_install_options;
 	$twitget_plugin_install_options = array(
 		'twitter_username' => '',
+		'use_https_url' => false,
 		'twitter_data' => NULL,
 		'last_access' => time(),
 		'time_limit' => 5,
@@ -41,7 +42,7 @@
 		'time_format' => 'D jS M y H:i',
 		'show_powered_by' => false,
 		'language' => 'en',
-		'version' => '3.33',
+		'version' => '3.38',
 		'consumer_key' => '',
 		'consumer_secret' => '',
 		'user_token' => '',
@@ -382,7 +383,7 @@
 
 			$limit = $options['number_of_tweets'];
 
-			$image_url = $tweets[0]['user']['profile_image_url']; // {$profile_image}
+			$image_url = ($options['use_https_url']) ? $tweets[0]['user']['profile_image_url_https'] : $tweets[0]['user']['profile_image_url']; // {$profile_image}
 			$twitter_username = $tweets[0]['user']['screen_name']; // {$user_twitter_name}
 			$twitter_username_real = $tweets[0]['user']['name']; // {$user_real_name}
 			$twitter_user_url = $tweets[0]['user']['url']; // {$url}
@@ -713,6 +714,7 @@
 				$twitget_relative = isset($_POST['twitget_relative_time']) ? $_POST['twitget_relative_time'] : null;
 				$new_link = isset($_POST['twitget_links_new_window']) ? $_POST['twitget_links_new_window'] : null;
 				$full_url = isset($_POST['twitget_links_full']) ? $_POST['twitget_links_full'] : null;
+				$https_url = isset($_POST['twitget_links_https']) ? $_POST['twitget_links_https'] : null;
 
 				$twitget_settings['twitter_username'] = stripslashes($_POST['twitget_username']);
 				$twitget_settings['time_limit'] = (int) $_POST['twitget_refresh'];
@@ -733,6 +735,7 @@
 				$twitget_settings['truncate_tweet'] = (isset($_POST['truncate_tweet'])) ? true : false;
 				$twitget_settings['truncate_tweet_size'] = intval($_POST['truncate_tweet_size']);
 				$twitget_settings['show_full_url'] = (isset($full_url)) ? true : false;
+				$twitget_settings['use_https_url'] = (isset($https_url)) ? true : false;
 				$message = "Settings updated.";
 
 				update_option('twitget_settings', $twitget_settings);
@@ -905,6 +908,14 @@
 						</td>
 					</tr>
 					<tr>
+						<th scope="row"><label for="twitget_links_new_window">Use HTTPS whenever possible</label></th>
+						<td>
+		    	            <input type="checkbox" name="twitget_links_https" id="twitget_links_https" value="true" <?php if($twitget_options['use_https_url'] == true) { ?>checked="checked"<?php } ?> />
+							<br />
+            				<span class="description">Check this if you want your URLs (images) to be using HTTPS.</span>
+						</td>
+					</tr>
+					<tr>
 						<th scope="row"><label for="twitget_exclude_replies">Exclude replies</label></th>
 						<td>
 		    	            <input type="checkbox" name="twitget_exclude_replies" id="twitget_exclude_replies" value="true" <?php if($twitget_options['exclude_replies'] == true) { ?>checked="checked"<?php } ?> />
@@ -941,7 +952,7 @@
 						<td>
 		    	            <input type="checkbox" name="twitget_show_powered" id="twitget_show_powered" value="true" <?php if($twitget_options['show_powered_by'] == true) { ?>checked="checked"<?php } ?> />
 							<br />
-            				<span class="description">Show powered by message, if you decide not to show it, please consider a <a href="http://gum.co/twitget" target="_blank">donation</a>.</span>
+            				<span class="description">Show powered by message, if you decide not to show it, please consider a <a href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=SKMW3BAC8KE52" target="_blank">donation</a>.</span>
 						</td>
 					</tr>		
 				</table>
@@ -1000,7 +1011,7 @@
 		
 		function simple_tweet_widget() {
 			$widget_ops = array('classname' => 'simple_tweet_widget', 'description' => 'Display your recent tweets.' );			
-			$this->WP_Widget('simple_tweet_widget', 'Twitget', $widget_ops);
+			parent::__construct('simple_tweet_widget', 'Twitget', $widget_ops);
 		}
 		
 		function widget($args, $instance) {

@@ -1,10 +1,10 @@
 === Plugin Name ===
 Contributors: ZeroCool51
-Donate link: http://gum.co/twitget
+Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=SKMW3BAC8KE52
 Tags: twitter widget, twitter, simple twitter widget, custom twitter, widget, tweet, twitter sidebar, twitter 1.1 api
 Requires at least: 3.0
-Tested up to: 3.8.2
-Stable tag: 3.3.3
+Tested up to: 4.3
+Stable tag: 3.3.8
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -44,6 +44,21 @@ None at the moment.
 4. Available variables for custom HTML output and example
 
 == Changelog ==
+
+= 3.3.8 =
+* [Bufix] Typo in method call. Please update immediately.
+
+= 3.3.7 =
+* [Bugfix] Replaced deprecated widget call. Please update if using WordPress 4.3 or newer.
+
+= 3.3.6 =
+* [Feature] Added option to use HTTPS wherever possible (avatar image URL).
+
+= 3.3.5 =
+* [Fix] Updated widget constructor call.
+
+= 3.3.4 =
+* [Fix] Small fix in time display.
 
 = 3.3.3 =
 * [Fix] Fixed a small XSS security exploit (could only be done if a user had admin access to your blog).
@@ -221,10 +236,6 @@ And this is basically it.
 == Author ==
 
 The author of this plugin is Bostjan Cigan, visit the [homepage](http://bostjan.gets-it.net "homepage").
-
-== Homepage ==
-
-Visit the [homepage](http://wpplugz.is-leet.com "homepage of twitget") of the plugin.
 
 == Thank you ==
 
