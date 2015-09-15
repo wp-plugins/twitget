@@ -3,8 +3,8 @@ Contributors: ZeroCool51
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=SKMW3BAC8KE52
 Tags: twitter widget, twitter, simple twitter widget, custom twitter, widget, tweet, twitter sidebar, twitter 1.1 api
 Requires at least: 3.0
-Tested up to: 4.0
-Stable tag: 3.3.5
+Tested up to: 4.3
+Stable tag: 3.3.7
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -44,6 +44,12 @@ None at the moment.
 4. Available variables for custom HTML output and example
 
 == Changelog ==
+
+= 3.3.7 =
+* [Bugfix] Replaced deprecated widget call. Please update if using WordPress 4.3 or newer.
+
+= 3.3.6 =
+* [Feature] Added option to use HTTPS wherever possible (avatar image URL).
 
 = 3.3.5 =
 * [Fix] Updated widget constructor call.
