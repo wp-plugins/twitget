@@ -3,7 +3,7 @@
 		Plugin Name: Twitget
 		Plugin URI: http://bostjan-cigan.com/plugins
 		Description: A simple widget that shows your recent tweets with fully customizable HTML output, hashtag support and more.
-		Version: 3.3.7
+		Version: 3.3.8
 		Author: Bostjan Cigan
 		Author URI: http://bostjan-cigan.com
 		License: GPL v2
@@ -42,7 +42,7 @@
 		'time_format' => 'D jS M y H:i',
 		'show_powered_by' => false,
 		'language' => 'en',
-		'version' => '3.37',
+		'version' => '3.38',
 		'consumer_key' => '',
 		'consumer_secret' => '',
 		'user_token' => '',
@@ -1011,7 +1011,7 @@
 		
 		function simple_tweet_widget() {
 			$widget_ops = array('classname' => 'simple_tweet_widget', 'description' => 'Display your recent tweets.' );			
-			parent::_construct('simple_tweet_widget', 'Twitget', $widget_ops);
+			parent::__construct('simple_tweet_widget', 'Twitget', $widget_ops);
 		}
 		
 		function widget($args, $instance) {

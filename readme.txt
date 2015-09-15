@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_i
 Tags: twitter widget, twitter, simple twitter widget, custom twitter, widget, tweet, twitter sidebar, twitter 1.1 api
 Requires at least: 3.0
 Tested up to: 4.3
-Stable tag: 3.3.7
+Stable tag: 3.3.8
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -44,6 +44,9 @@ None at the moment.
 4. Available variables for custom HTML output and example
 
 == Changelog ==
+
+= 3.3.8 =
+* [Bufix] Typo in method call. Please update immediately.
 
 = 3.3.7 =
 * [Bugfix] Replaced deprecated widget call. Please update if using WordPress 4.3 or newer.
